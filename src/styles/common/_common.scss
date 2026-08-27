@@ -1,0 +1,391 @@
+//VARIABLES
+$sizeTen : 10px;
+$sizeTwenty : 20px;
+$sizeThirty : 30px;
+$sizeFify : 50px;
+
+.card-body-padd {
+    padding: 1rem 0.1rem !important;
+}
+
+.searchBox{
+    display: block;
+    width: 100%;
+    height: 35px;
+    padding: 0.5rem 3rem 0.5rem 1rem;
+    -moz-padding-start: calc(1rem - 3px);
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.5;
+    color: #323232;
+    background-color: #f8f9fa;
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 16px 12px;
+    border: 1px solid #f8f9fa;
+    border-radius: 1rem;
+    -webkit-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.075);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.075);
+    -webkit-transition: border-color 0.15s ease-in-out, -webkit-box-shadow 0.15s ease-in-out;
+    transition: border-color 0.15s ease-in-out, -webkit-box-shadow 0.15s ease-in-out;
+    -o-transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out, -webkit-box-shadow 0.15s ease-in-out;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+.switch {
+    width: 700px;
+    height: 20px;
+}
+
+.page-card {
+    padding: 1rem 0.5rem;
+}
+
+.text-reset {
+    font-size: 18px !important;
+}
+
+.progressBarLabel {
+    font-size: 20px;
+    font-weight: bold;
+    // color: $primary;
+}
+
+.custom-margin-right {
+    margin-right: 60px;
+}
+
+.bounce {
+    animation: bounceAnimation 0.7s ease-out;
+}
+
+@keyframes bounceAnimation {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-20px);
+    }
+    60% {
+        transform: translateY(-10px);
+    }
+}
+
+.fab-button {
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 60px !important;
+    height: 60px !important;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.card-header-c {
+    padding: 0.8rem 1.5rem !important;
+    min-height: 3.5rem !important;
+    border-bottom: 1px solid #4d6afa75;
+}
+
+// Master list pages (Member, Center, etc.): count left, filter + search + export right
+.member-list-card-header {
+    align-items: flex-end !important;
+    justify-content: space-between !important;
+    flex-wrap: nowrap !important;
+    gap: 2.5rem !important;
+
+    &__count {
+        flex: 0 0 auto;
+    }
+
+    &__actions {
+        flex: 1 1 auto !important;
+        min-width: 0;
+        display: flex !important;
+        justify-content: flex-end !important;
+        align-items: flex-end !important;
+        padding-left: 1rem;
+    }
+
+    .master-list-toolbar {
+        width: auto;
+        flex: 0 0 auto;
+        min-width: 0;
+        margin-left: 0;
+        justify-content: flex-end;
+        gap: 1rem 1.25rem !important;
+    }
+
+    .member-list-filter-col {
+        flex: 0 0 auto;
+        min-width: 11rem;
+        width: 12rem;
+        max-width: 14rem;
+    }
+
+    .member-list-search-col {
+        flex: 1 1 16rem;
+        min-width: 16rem;
+        max-width: 24rem;
+    }
+
+    .member-list-export-col {
+        flex: 0 0 auto;
+        min-width: 8.5rem;
+    }
+
+    .master-list-toolbar .col-3 {
+        min-width: 11rem;
+    }
+
+    .master-list-toolbar .col-4 {
+        min-width: 18rem;
+        flex: 0 0 auto;
+        width: 33.33333333%;
+        max-width: 22rem;
+    }
+
+    .member-list-search.searchBox,
+    .master-list-toolbar .searchBox {
+        position: relative;
+        display: flex !important;
+        align-items: center;
+        width: 100% !important;
+        min-height: calc(3.5rem + 2px);
+        height: calc(3.5rem + 2px);
+        padding: 0.35rem 1rem 0.35rem 3.25rem !important;
+        border: 1px solid #dee2e6;
+        background-color: #fff;
+        overflow: visible;
+
+        label {
+            position: absolute;
+            left: 1rem;
+            margin: 0;
+            flex-shrink: 0;
+        }
+
+        #searchInput,
+        input[type='search'] {
+            flex: 1 1 auto;
+            min-width: 10rem;
+            width: 100% !important;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+
+    .master-list-toolbar .btn {
+        min-height: calc(3.5rem + 2px);
+    }
+
+    @media (max-width: 991.98px) {
+        flex-wrap: wrap !important;
+
+        &__actions {
+            width: 100%;
+            max-width: none;
+            padding-left: 0;
+        }
+
+        .master-list-toolbar {
+            min-width: 0;
+        }
+    }
+}
+
+.badge-s {
+    font-size: 0.95em !important;
+}
+
+.center-ml {
+    margin-left: 20px;
+}
+
+.fab-container {
+    position: fixed;
+    bottom: 40px;
+    right: 20px;
+    transition: transform 0.2s ease-out;
+}
+
+.custom-margin {
+    margin-bottom: 6rem !important;
+    /* Adjust as needed */
+}
+
+.labelSize{
+    font-size:medium;
+    color: black;
+    font-weight: 500; 
+}
+.hide {
+    display: none;
+}
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgb(111, 111, 111, 0.5);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.alginCenter {
+    align-items: center;
+}
+
+.memberSaveBtn {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    padding: 0.5rem 0 1rem;
+}
+.badge-font {
+    font-size: 13px;
+}
+.left-align {
+    margin-left: $sizeThirty;
+}
+.headColor {
+    color: black;
+}
+
+.marginBtm {
+    margin-bottom: $sizeThirty;
+}
+.marginBtmTen {
+    margin-bottom: $sizeTen;
+}
+
+.required {
+    color: red;
+}
+.custom-switch {
+    width: 3.5em !important;
+    height: 25px;
+    cursor: pointer;
+}
+
+.mr-1 {
+    margin-right: $sizeTen;
+}
+
+.padding-1 {
+    padding-left: 19px;
+    padding-right: 22px;
+}
+
+.tableStyle{
+    white-space: nowrap;
+}
+
+.bgInfoCardColor {
+    background-color: #01a8fe !important;
+}
+ 
+.txtColor {
+    color: #ffff;
+}
+ 
+.bgWaringCardColor {
+    background-color: #f39834 !important;
+}
+ 
+.bgDangerCardColor {
+    background-color: #e12c2c !important;
+}
+
+.bgSuccessCardColor {
+    background-color: #119701 !important;
+}
+
+.permission-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+.permission-table th,
+.permission-table td {
+    padding: 14px 16px;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.permission-table th {
+    font-weight: 600;
+}
+
+/* Center all permission columns */
+.centerCol {
+    text-align: center;
+}
+
+/* Switch */
+.custom-switch {
+    width: 3.2em;
+    height: 22px;
+    cursor: pointer;
+    display: block;
+    margin: auto;
+}
+
+/* Button centering */
+.permission-table td button {
+    display: block;
+    margin: auto;
+}
+
+/* Menu heading row */
+.menuRow td {
+    background-color: #f5f5f5;
+    font-weight: 600;
+    border-radius: 10px;
+}
+
+/* Submenu indentation */
+.submenuName {
+    padding-left: 32px;
+    font-size: 14px;
+}
+
+/* Row hover */
+.permission-table tbody tr:hover {
+    background-color: #fafafa;
+}
+
+// Reusable required-field attention animation (used across auto-loan pages)
+.mandatory-shake {
+    animation: auto-loan-mandatory-shake 0.35s ease-in-out;
+}
+
+.member-photo-card.mandatory-shake {
+    border: 1px solid #dc3545;
+    box-shadow: 0 0 0 0.2rem rgb(220 53 69 / 15%);
+}
+
+@keyframes auto-loan-mandatory-shake {
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-4px);
+    }
+    50% {
+        transform: translateX(4px);
+    }
+    75% {
+        transform: translateX(-3px);
+    }
+}

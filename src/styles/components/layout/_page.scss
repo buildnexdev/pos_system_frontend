@@ -1,0 +1,18 @@
+//
+//  Page
+//
+
+@use 'sass:map';
+
+.page {
+	@include padding-top(map.get($page, padding-y));
+
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	min-height: 0;
+
+	@include only-safari {
+		// height: calc(100% - #{map-get($footer, height)});
+	}
+}

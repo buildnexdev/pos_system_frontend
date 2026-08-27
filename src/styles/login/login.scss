@@ -1,0 +1,594 @@
+// =============================================================================
+// SquareNow — Login (chat-3 redesign: dusk parallax scene + 3D tilt card)
+// -----------------------------------------------------------------------------
+// The scene element owns four CSS custom properties driven from React by a
+// rAF-throttled mousemove handler:
+//   --mx / --my : cursor position, normalised to [-1, 1]
+//   --gx / --gy : glare hotspot position in %
+// Every parallax layer translates from those vars at its own depth; the card
+// tilts in 3D from the same vars. With prefers-reduced-motion the handler
+// never runs, so the vars stay 0 and the page is perfectly static.
+// =============================================================================
+
+.login-scene {
+	position: relative;
+	min-height: 100vh;
+	width: 100%;
+	overflow: hidden;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 24px;
+	box-sizing: border-box;
+	background: linear-gradient(180deg, #0c1a14 0%, #13271f 55%, #0b1711 100%);
+}
+
+// ---- background layers ------------------------------------------------------
+.login-layer {
+	position: absolute;
+	pointer-events: none;
+	transition: transform 0.3s cubic-bezier(0.15, 0.65, 0.3, 1);
+	will-change: transform;
+	transform: translate3d(
+		calc(var(--mx, 0) * var(--depth, 10) * 1px),
+		calc(var(--my, 0) * var(--depth, 10) * 0.7px),
+		0
+	);
+}
+
+.login-orb {
+	border-radius: 50%;
+
+	&.login-orb--moss {
+		width: 380px;
+		height: 380px;
+		background: #2f8757;
+		opacity: 0.3;
+		filter: blur(95px);
+	}
+
+	&.login-orb--amber {
+		width: 320px;
+		height: 320px;
+		background: #d4823a;
+		opacity: 0.2;
+		filter: blur(105px);
+	}
+
+	&.login-orb--info {
+		width: 420px;
+		height: 420px;
+		background: #2a6f97;
+		opacity: 0.16;
+		filter: blur(115px);
+	}
+}
+
+.login-dots {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+	background-size: 16px 16px;
+	opacity: 0.4;
+}
+
+// floating glass squares
+.login-shape {
+	border-radius: 24px;
+	background: rgba(255, 255, 255, 0.04);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+
+	&.login-shape--amber {
+		background: rgba(212, 130, 58, 0.25);
+		border-color: rgba(212, 130, 58, 0.35);
+	}
+
+	&.login-shape--moss {
+		background: rgba(47, 135, 87, 0.4);
+		border: none;
+	}
+}
+
+// gentle bob — inert under prefers-reduced-motion (global kill-switch)
+@keyframes login-floaty {
+	0%,
+	100% {
+		transform: translateY(0) rotate(var(--rot, 0deg));
+	}
+	50% {
+		transform: translateY(-16px) rotate(calc(var(--rot, 0deg) + 3deg));
+	}
+}
+.login-floaty {
+	animation: login-floaty var(--dur, 8s) ease-in-out infinite;
+}
+
+// floating feature chips (hidden below xl so they never crowd the card)
+.login-chip {
+	border-radius: 18px;
+	padding: 12px 16px;
+	background: rgba(255, 255, 255, 0.1);
+	border: 1px solid rgba(255, 255, 255, 0.15);
+	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
+	box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+	color: #fff;
+
+	.login-chip-label {
+		font-size: 10px;
+		text-transform: uppercase;
+		letter-spacing: 0.14em;
+		font-weight: 700;
+		color: rgba(255, 255, 255, 0.6);
+		white-space: nowrap;
+	}
+
+	.login-chip-value {
+		font-family: var(--sn-font-display, Georgia, serif);
+		font-size: 19px;
+		font-weight: 600;
+		margin-top: 2px;
+		white-space: nowrap;
+	}
+
+	@media (max-width: 1399px) {
+		display: none;
+	}
+}
+
+// ---- 3D tilt card -----------------------------------------------------------
+.login-card-perspective {
+	position: relative;
+	z-index: 10;
+	perspective: 1500px;
+	padding: 0 16px;
+	width: 100%;
+	max-width: 880px;
+}
+
+.login-card {
+	display: grid;
+	grid-template-columns: 440px 1fr;
+	transition: transform 0.3s cubic-bezier(0.15, 0.65, 0.3, 1);
+	will-change: transform;
+	transform: rotateX(calc(var(--my, 0) * -5deg)) rotateY(calc(var(--mx, 0) * 7deg));
+	transform-style: preserve-3d;
+
+	@media (max-width: 991px) {
+		grid-template-columns: 1fr;
+		max-width: 460px;
+		margin: 0 auto;
+	}
+}
+
+.login-card-glare {
+	position: absolute;
+	inset: 0;
+	border-radius: 28px;
+	pointer-events: none;
+	z-index: 20;
+	background: radial-gradient(
+		520px circle at var(--gx, 50%) var(--gy, 40%),
+		rgba(255, 255, 255, 0.15),
+		rgba(255, 255, 255, 0) 62%
+	);
+	transform: translateZ(60px);
+}
+
+// left — brand panel
+.login-brand-panel {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	border-radius: 28px 0 0 28px;
+	padding: 40px;
+	color: #fff;
+	overflow: hidden;
+	background: linear-gradient(160deg, #27523f 0%, #1b3d30 55%, #122a20 100%);
+	box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+	transform: translateZ(30px);
+
+	@media (max-width: 991px) {
+		display: none;
+	}
+
+	.login-brand-dots {
+		position: absolute;
+		inset: 0;
+		background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+		background-size: 16px 16px;
+		opacity: 0.5;
+		pointer-events: none;
+	}
+
+	.login-brand-headline {
+		font-family: var(--sn-font-display, Georgia, serif);
+		font-size: 30px;
+		line-height: 1.14;
+		font-weight: 600;
+		margin: 26px 0 0;
+	}
+
+	.login-brand-sub {
+		font-size: 13.5px;
+		color: rgba(255, 255, 255, 0.7);
+		margin-top: 12px;
+		line-height: 1.55;
+	}
+
+	.login-brand-features {
+		margin-top: auto;
+		padding-top: 28px;
+
+		.login-brand-feature {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			padding: 10px 0;
+			border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+			font-size: 13px;
+			color: rgba(255, 255, 255, 0.85);
+
+			.svg-icon,
+			svg {
+				color: #8ccbac;
+				flex-shrink: 0;
+			}
+		}
+	}
+
+	.login-brand-date {
+		font-family: var(--sn-font-mono, monospace);
+		font-size: 11px;
+		color: rgba(255, 255, 255, 0.45);
+		padding-top: 14px;
+	}
+}
+
+// right — form panel (also hosts the gold-price form)
+.login-form-section {
+	position: relative;
+	background: #fff;
+	border-radius: 0 28px 28px 0;
+	padding: 40px 36px;
+	box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+	transform: translateZ(30px);
+	display: flex;
+	flex-direction: column;
+	box-sizing: border-box;
+
+	@media (max-width: 991px) {
+		border-radius: 28px;
+		padding: 32px 24px;
+	}
+}
+
+// shake on failed validation
+@keyframes login-shake {
+	10%,
+	90% {
+		transform: translateZ(30px) translateX(-2px);
+	}
+	20%,
+	80% {
+		transform: translateZ(30px) translateX(4px);
+	}
+	30%,
+	70% {
+		transform: translateZ(30px) translateX(-6px);
+	}
+	40%,
+	60% {
+		transform: translateZ(30px) translateX(6px);
+	}
+	50% {
+		transform: translateZ(30px) translateX(-4px);
+	}
+}
+.login-form-section.shake {
+	animation: login-shake 0.45s ease both;
+}
+
+.login-form {
+	width: 100%;
+}
+
+.login-eyebrow {
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.16em;
+	color: var(--sn-ink-muted, #6b6457);
+	font-weight: 700;
+}
+
+.login-title {
+	font-family: var(--sn-font-display, Georgia, serif);
+	font-size: 26px;
+	font-weight: 600;
+	color: var(--sn-ink, #1a1814);
+	margin: 6px 0 0;
+}
+
+.logo-img {
+	width: 200px;
+	margin-bottom: 4px;
+	display: block;
+}
+
+.input-label {
+	align-self: flex-start;
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: var(--sn-ink-2, #4a463f);
+	margin-bottom: 8px;
+	margin-top: 20px;
+}
+
+.login-input-group {
+	border-radius: 14px;
+	overflow: hidden;
+	background: var(--sn-paper, #faf7f2);
+	display: flex;
+	align-items: stretch;
+	border: 1px solid var(--sn-line-strong, #d9cfbd);
+	margin-bottom: 20px;
+	height: 52px;
+	transition: border-color 0.12s ease, box-shadow 0.12s ease;
+
+	&:focus-within {
+		border-color: var(--sn-moss, #2d5f4f);
+		box-shadow: 0 0 0 3px rgba(45, 95, 79, 0.18);
+	}
+
+	// leading icon + eye buttons — quiet, not colored blocks
+	.login-icon-btn,
+	.btn.btn-icon,
+	.btn-primary,
+	.btn-info {
+		background: transparent !important;
+		border: none !important;
+		color: var(--sn-ink-muted, #6b6457) !important;
+		width: 48px !important;
+		min-width: 48px !important;
+		height: 100% !important;
+		display: flex !important;
+		align-items: center !important;
+		justify-content: center !important;
+		padding: 0 !important;
+		margin: 0 !important;
+		flex-shrink: 0;
+		box-shadow: none !important;
+		border-radius: 0 !important;
+
+		.svg-icon,
+		svg {
+			color: var(--sn-ink-muted, #6b6457) !important;
+			fill: var(--sn-ink-muted, #6b6457) !important;
+			width: 20px !important;
+			height: 20px !important;
+		}
+
+		&.eye-btn:hover {
+			.svg-icon,
+			svg {
+				color: var(--sn-moss, #2d5f4f) !important;
+				fill: var(--sn-moss, #2d5f4f) !important;
+			}
+		}
+	}
+
+	.form-control {
+		border: none !important;
+		padding: 12px 4px 12px 0;
+		font-size: 0.95rem;
+		flex-grow: 1;
+		height: 100% !important;
+		background: transparent !important;
+		box-shadow: none !important;
+
+		&:focus {
+			box-shadow: none !important;
+			border: none !important;
+		}
+
+		&::placeholder {
+			color: var(--sn-ink-muted, #8c98a5);
+			font-size: 0.9rem;
+		}
+	}
+}
+
+.forgot-password-link {
+	width: 100%;
+	text-align: right;
+	margin-top: -10px;
+	margin-bottom: 28px;
+
+	a {
+		color: var(--sn-moss, #2d5f4f);
+		font-size: 0.8rem;
+		font-weight: 700;
+		text-decoration: none;
+
+		&:hover {
+			text-decoration: underline;
+		}
+	}
+}
+
+.signin-btn {
+	background: linear-gradient(135deg, #2d5f4f 0%, #1f4538 100%) !important;
+	border: none !important;
+	border-radius: 14px !important;
+	padding: 12px 25px !important;
+	font-weight: 700 !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	flex-direction: row-reverse !important;
+	gap: 10px !important;
+	width: 100% !important;
+	font-size: 1rem !important;
+	text-transform: none;
+	box-shadow: 0 6px 20px rgba(31, 69, 56, 0.35) !important;
+	margin-top: 5px;
+	color: #ffffff !important;
+	transition: transform 0.12s ease, box-shadow 0.12s ease;
+
+	&:hover {
+		box-shadow: 0 10px 26px rgba(31, 69, 56, 0.45) !important;
+		transform: translateY(-1px);
+	}
+
+	&:active {
+		transform: translateY(0) scale(0.99);
+	}
+
+	.svg-icon {
+		font-size: 1.1rem !important;
+		margin: 0 !important;
+		color: #ffffff !important;
+		fill: #ffffff !important;
+	}
+}
+
+.login-footer-note {
+	position: absolute;
+	bottom: 24px;
+	left: 28px;
+	z-index: 20;
+	font-family: var(--sn-font-mono, monospace);
+	font-size: 11px;
+	color: rgba(255, 255, 255, 0.35);
+}
+
+// ---- small screens ----------------------------------------------------------
+@media (max-width: 576px) {
+	.login-scene {
+		padding: 12px;
+	}
+
+	.login-form-section {
+		padding: 26px 18px;
+		border-radius: 20px;
+	}
+
+	.login-footer-note {
+		display: none;
+	}
+}
+
+// =============================================================================
+// Gold Price form — rendered inside .login-form-section after first login of
+// the day for gold-loan companies. Class names unchanged; palette aligned.
+// =============================================================================
+.gold-price-form {
+	width: 100%;
+	padding: 20px 0;
+}
+
+.gold-price-header {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-bottom: 30px;
+	gap: 15px;
+
+	.gold-imgMain {
+		width: 40px;
+		height: 40px;
+		object-fit: contain;
+	}
+
+	.gold-price-title {
+		font-size: 1.5rem;
+		font-weight: 700;
+		color: var(--sn-ink, #333);
+		margin: 0;
+	}
+}
+
+.gold-price-form-content {
+	width: 100%;
+
+	label {
+		font-size: 0.85rem;
+		font-weight: 600;
+		color: var(--sn-ink-2, #333);
+		margin-bottom: 8px;
+	}
+}
+
+.gold-price-input-group {
+	border-radius: 14px;
+	overflow: hidden;
+	background: var(--sn-paper, #fff);
+	display: flex;
+	align-items: stretch;
+	border: 1px solid var(--sn-line-strong, #d9cfbd);
+	margin-bottom: 0;
+
+	&:focus-within {
+		border-color: var(--sn-moss, #2d5f4f);
+		box-shadow: 0 0 0 3px rgba(45, 95, 79, 0.18);
+	}
+
+	.gold-img {
+		width: 55px;
+		min-width: 55px;
+		height: 55px;
+		padding: 12px;
+		object-fit: contain;
+		flex-shrink: 0;
+		background-color: transparent;
+	}
+
+	.gold-price-input {
+		border: none !important;
+		padding: 14px 18px;
+		font-size: 0.95rem;
+		flex-grow: 1;
+		height: 55px !important;
+		background: transparent !important;
+
+		&:focus {
+			box-shadow: none;
+		}
+
+		&::placeholder {
+			color: #999;
+			font-size: 0.9rem;
+		}
+	}
+}
+
+.gold-price-update-btn {
+	background: linear-gradient(135deg, #2d5f4f 0%, #1f4538 100%) !important;
+	border: none !important;
+	border-radius: 12px !important;
+	padding: 14px 20px !important;
+	font-weight: 700 !important;
+	width: 100% !important;
+	font-size: 1.05rem !important;
+	text-transform: none;
+	box-shadow: 0 4px 15px rgba(31, 69, 56, 0.3) !important;
+	margin-top: 10px;
+	color: #fff !important;
+
+	&:hover {
+		box-shadow: 0 6px 20px rgba(31, 69, 56, 0.4) !important;
+		transform: translateY(-1px);
+	}
+}
+
+@media (max-width: 576px) {
+	.gold-price-header {
+		flex-direction: column;
+		gap: 10px;
+
+		.gold-price-title {
+			font-size: 1.25rem;
+		}
+	}
+}

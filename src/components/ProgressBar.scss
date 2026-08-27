@@ -1,0 +1,33 @@
+.myContainer {
+    padding: 20px;
+    align-content: center;
+    flex: 1;
+    flex-direction: column;
+}
+
+.myline {
+    width: 25%;
+    height: 3px;
+    background: #46bcaa;
+    margin-top: 30px;
+}
+
+.myCircle {
+    padding: 10px;
+    border: 1px solid;
+    border-radius: 50%;
+    height: 40px;
+    width: 40px;
+    margin-top: 10px;
+    text-align: center;
+}
+
+.myCircle.filled {
+    background-color: #46bcaa;
+    color: #ffffff;
+    border-color: #46bcaa;
+}
+
+.myline.filled {
+    background-color: #46bcaa;
+}

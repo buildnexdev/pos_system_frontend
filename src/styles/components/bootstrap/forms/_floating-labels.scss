@@ -1,0 +1,41 @@
+// stylelint-disable selector-max-specificity
+// stylelint-disable no-descending-specificity
+.form-floating {
+	&:not(.form-control:disabled)::before {
+		content: none;
+	}
+
+	> .form-control:focus,
+	> .form-control:not(:placeholder-shown),
+	> .form-control-plaintext,
+	> .form-select,
+	> .sn-floating-select {
+		~ label {
+			opacity: 0.65 !important;
+			transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem) !important;
+			z-index: 2;
+
+			&::after {
+				background: none;
+			}
+		}
+
+		.sn-select__placeholder {
+			white-space: nowrap !important;
+			overflow: hidden !important;
+			text-overflow: ellipsis !important;
+			max-width: 100%;
+			line-height: 1.25 !important;
+		}
+
+		.sn-select__single-value {
+			white-space: nowrap !important;
+			overflow: hidden !important;
+			text-overflow: ellipsis !important;
+			max-width: calc(100% - 0.5rem);
+			line-height: 1.25 !important;
+		}
+	}
+}
+// stylelint-enable selector-max-specificity
+// stylelint-enable no-descending-specificity

@@ -1,0 +1,136 @@
+//
+// React Select (sn-select) — theme colors + stable option hover/focus
+//
+
+.sn-select {
+	&__control {
+		border-color: var(--sn-line, #ebe3d5) !important;
+		box-shadow: none !important;
+		background-color: #fff !important;
+		color: var(--sn-ink, #1a1814) !important;
+
+		&:hover {
+			border-color: var(--sn-line-strong, #d9cfbd) !important;
+		}
+
+		&--is-focused {
+			border-color: var(--sn-moss, #2d5f4f) !important;
+			box-shadow: 0 0 0 3px rgba(45, 95, 79, 0.18) !important;
+		}
+	}
+
+	&__single-value {
+		color: var(--sn-ink, #1a1814) !important;
+	}
+
+	&__placeholder {
+		color: var(--sn-ink-muted, #6b6457) !important;
+	}
+
+	&__menu,
+	&__menu-list {
+		background-color: #fff !important;
+	}
+
+	&__option {
+		transition: none !important;
+		cursor: pointer !important;
+		color: var(--sn-ink, #1a1814) !important;
+		background-color: transparent !important;
+
+		&--is-focused:not(&--is-selected) {
+			background-color: var(--sn-moss-soft, #dce8e3) !important;
+			color: var(--sn-ink, #1a1814) !important;
+		}
+
+		&--is-selected {
+			background-color: var(--sn-moss, #2d5f4f) !important;
+			color: #fff !important;
+		}
+	}
+
+	&__menu-list {
+		transition: none !important;
+	}
+
+	// Hide inline search input chip when the menu is closed; show it while filtering.
+	&__control--menu-is-open {
+		.sn-select__input-container {
+			position: relative !important;
+			width: auto !important;
+			min-width: 2ch !important;
+			max-width: 100% !important;
+			height: auto !important;
+			clip: auto !important;
+			overflow: visible !important;
+			white-space: normal !important;
+			border: 0 !important;
+		}
+
+		.sn-select__input {
+			opacity: 1 !important;
+			width: 100% !important;
+			min-width: 2ch !important;
+		}
+	}
+
+	&__input-container {
+		position: absolute !important;
+		width: 1px !important;
+		height: 1px !important;
+		min-width: 0 !important;
+		max-width: 0 !important;
+		margin: 0 !important;
+		padding: 0 !important;
+		overflow: hidden !important;
+		clip: rect(0, 0, 0, 0) !important;
+		white-space: nowrap !important;
+		border: 0 !important;
+	}
+
+	&__input {
+		min-width: 0 !important;
+		width: 0 !important;
+		opacity: 0 !important;
+		padding: 0 !important;
+		margin: 0 !important;
+		border: none !important;
+		background: transparent !important;
+		box-shadow: none !important;
+	}
+
+	// Kill the browser's default focus outline/highlight (the small green rounded
+	// box that appears around the value text) on the inner search input and its
+	// wrappers when the control is focused or the menu is open.
+	&__value-container,
+	&__single-value,
+	&__input-container,
+	&__input {
+		outline: none !important;
+		outline-offset: 0 !important;
+		box-shadow: none !important;
+
+		&:focus,
+		&:focus-visible {
+			outline: none !important;
+			outline-offset: 0 !important;
+			box-shadow: none !important;
+		}
+	}
+
+	&__input input,
+	&__input-container input {
+		outline: none !important;
+		outline-offset: 0 !important;
+		box-shadow: none !important;
+		border: none !important;
+
+		&:focus,
+		&:focus-visible {
+			outline: none !important;
+			outline-offset: 0 !important;
+			box-shadow: none !important;
+			border: none !important;
+		}
+	}
+}

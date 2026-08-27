@@ -1,0 +1,1706 @@
+// =============================================================================
+// SquareNow LMS — design-system theme override
+// -----------------------------------------------------------------------------
+// Source of truth: /tmp/design-pkg/squarenow-lms/project/index.html + tokens.css
+//
+// Strategy:
+//   - Override Bootstrap CSS custom properties at :root so every component
+//     (cards, buttons, modals, badges, forms, tables, popovers, etc.) inherits
+//     the new warm-cream paper + moss + amber + accent palette without
+//     touching component markup.
+//   - Restyle the existing layout chrome (.aside, .header, .subheader, .brand)
+//     by attribute selectors — no JSX changes required.
+//   - All overrides scope under :root and the standard class names already
+//     emitted by the existing app; no React component needs to import this
+//     file directly — styles.scss imports it last.
+// =============================================================================
+
+// -----------------------------------------------------------------------------
+// 1. Design tokens (mirrors index.html's Tailwind config)
+// -----------------------------------------------------------------------------
+:root {
+	// Paper & ink
+	--sn-paper: #faf7f2;
+	--sn-sand: #f4efe7;
+	--sn-line: #ebe3d5;
+	--sn-line-strong: #d9cfbd;
+	--sn-ink: #1a1814;
+	--sn-ink-2: #4a463f;
+	// ink-muted darkened from #8b867d → #6b6457 so it passes WCAG AA 4.5:1
+	// on --sn-paper for body-text-sized labels (timestamps, metadata, etc.)
+	--sn-ink-muted: #6b6457;
+	--sn-white: #ffffff;
+
+	// Brand
+	--sn-moss: #2d5f4f; // white text → 7.5:1 (AAA)
+	--sn-moss-deep: #1f4538;
+	--sn-moss-soft: #dce8e3;
+	// "amber" stays the warm accent for chips/icons/tints (used at 3:1 for UI
+	// graphics, which is WCAG-permitted). "-strong" is the variant we use on
+	// solid colored buttons where the foreground is white text and we need
+	// 4.5:1 — at 3.2:1 the original amber failed.
+	--sn-amber: #d4823a;
+	--sn-amber-strong: #a85420; // white text → 5.5:1 (AA)
+	--sn-amber-soft: #fbebd7;
+
+	// Status — soft tones for chips, strong tones for solid buttons
+	--sn-good: #2f8757;
+	--sn-good-strong: #1f6b47; // white text → 5.6:1 (AA)
+	--sn-good-soft: #dceedc;
+	--sn-warn: #b7791f;
+	--sn-warn-strong: #8c5a12; // white text → 6.2:1 (AA)
+	--sn-warn-soft: #faefc9;
+	--sn-bad: #b33a2e; // white text → 5.5:1 (AA)
+	--sn-bad-soft: #f5dad3;
+	--sn-info: #2a6f97; // white text → 5.3:1 (AA)
+	--sn-info-soft: #dde9f1;
+
+	// Accents (for nav-group chips)
+	--sn-clay: #b85c38;
+	--sn-clay-soft: #f2dbcb;
+	--sn-plum: #7a5a8c;
+	--sn-plum-soft: #e8def0;
+
+	// Type
+	--sn-font-sans: 'Manrope', 'Poppins', ui-sans-serif, system-ui, -apple-system,
+		'Segoe UI', Roboto, sans-serif;
+	--sn-font-display: 'Fraunces', 'Manrope', Georgia, serif;
+	--sn-font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo,
+		monospace;
+
+	// Radii (warmer than Bootstrap defaults)
+	--sn-r-sm: 8px;
+	--sn-r-md: 12px;
+	--sn-r-lg: 16px;
+	--sn-r-pill: 999px;
+
+	// Soft warm shadows
+	--sn-shadow-1: 0 1px 2px rgba(60, 45, 25, 0.05),
+		0 1px 1px rgba(60, 45, 25, 0.03);
+	--sn-shadow-2: 0 4px 12px rgba(60, 45, 25, 0.07),
+		0 2px 4px rgba(60, 45, 25, 0.04);
+	--sn-shadow-3: 0 16px 40px rgba(40, 28, 12, 0.12),
+		0 4px 10px rgba(40, 28, 12, 0.05);
+
+	// -------------------------------------------------------------------------
+	// Override Bootstrap CSS custom properties so the entire UI re-paints.
+	// These names come from bootstrap/scss/root.scss.
+	// -------------------------------------------------------------------------
+	--bs-primary: #2d5f4f; // moss
+	--bs-primary-rgb: 45, 95, 79;
+	--bs-secondary: #d4823a; // amber
+	--bs-secondary-rgb: 212, 130, 58;
+	// Bootstrap uses --bs-success / --bs-warning for both `.bg-*` chips and
+	// `.btn-*` solid buttons. To pass WCAG AA on the solid-button surface
+	// while still looking warm on chips, we map --bs-* to the strong tones;
+	// soft chips elsewhere reference `--sn-*-soft` directly so they keep
+	// the lighter wash.
+	--bs-success: #1f6b47;
+	--bs-success-rgb: 31, 107, 71;
+	--bs-info: #2a6f97;
+	--bs-info-rgb: 42, 111, 151;
+	--bs-warning: #8c5a12;
+	--bs-warning-rgb: 140, 90, 18;
+	--bs-danger: #b33a2e;
+	--bs-danger-rgb: 179, 58, 46;
+	--bs-light: #f4efe7;
+	--bs-light-rgb: 244, 239, 231;
+	--bs-dark: #1a1814;
+	--bs-dark-rgb: 26, 24, 20;
+	--bs-body-bg: #faf7f2;
+	--bs-body-bg-rgb: 250, 247, 242;
+	--bs-body-color: #1a1814;
+	--bs-body-color-rgb: 26, 24, 20;
+	--bs-border-color: #ebe3d5;
+	--bs-border-color-translucent: rgba(26, 24, 20, 0.075);
+	--bs-link-color: #2d5f4f;
+	--bs-link-hover-color: #1f4538;
+	--bs-body-font-family: var(--sn-font-sans);
+
+	// Extra theme-tokens reused below
+	--sn-brand-grad: linear-gradient(135deg, #2d5f4f 0%, #1f4538 100%);
+}
+
+// -----------------------------------------------------------------------------
+// 2. Body & document
+// -----------------------------------------------------------------------------
+html,
+body {
+	background: var(--sn-paper) !important;
+	color: var(--sn-ink) !important;
+	font-family: var(--sn-font-sans) !important;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+.font-display,
+.h1,
+.h2,
+.h3,
+h1,
+h2,
+h3,
+.modal-title,
+.offcanvas-title,
+.card-title,
+.brand-title {
+	font-family: var(--sn-font-display) !important;
+	letter-spacing: -0.01em;
+	font-weight: 600;
+}
+
+.font-mono,
+.mono,
+.num,
+.tabular-nums,
+.amount,
+code,
+kbd,
+pre {
+	font-family: var(--sn-font-mono);
+	font-variant-numeric: tabular-nums;
+	font-feature-settings: 'tnum';
+}
+
+// Custom warm scrollbar
+::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+}
+::-webkit-scrollbar-thumb {
+	background: var(--sn-line-strong);
+	border-radius: var(--sn-r-pill);
+}
+::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+:focus-visible {
+	outline: 2px solid var(--sn-moss);
+	outline-offset: 2px;
+	border-radius: 6px;
+}
+
+// -----------------------------------------------------------------------------
+// 3. Sidebar (aside) — "dark forest" per the chat-3 redesign: deep green-black
+//    panel, sage muted text, white/10 active pill. Carried across every page.
+// -----------------------------------------------------------------------------
+.aside {
+	// Forest tokens (scoped — the rest of the app stays warm-light)
+	--sn-forest: #15231d;
+	--sn-forest-line: #22332b;
+	--sn-forest-text: #aebfb4;
+	--sn-forest-text-dim: #9fb3a8;
+
+	background: var(--sn-forest) !important;
+	border-right: 1px solid var(--sn-forest-line);
+	box-shadow: var(--sn-shadow-1);
+	color: var(--sn-forest-text) !important;
+
+	.aside-head {
+		border-bottom: 1px solid var(--sn-forest-line);
+		padding-bottom: 1rem;
+	}
+
+	.aside-body {
+		padding-top: 0.75rem;
+	}
+
+	.aside-foot {
+		border-top: 1px solid var(--sn-forest-line);
+		background: rgba(255, 255, 255, 0.03);
+	}
+
+	// Navigation items — sage text, white-wash hover, white/10 active pill
+	.navigation-item,
+	.navigation a,
+	a.navigation-link,
+	.navigation-link {
+		color: var(--sn-forest-text) !important;
+		border-radius: var(--sn-r-md);
+		transition: background 0.12s ease, color 0.12s ease;
+
+		&:hover {
+			background: rgba(255, 255, 255, 0.05) !important;
+			color: #fff !important;
+		}
+
+		&.active,
+		&[aria-current='page'],
+		&.active-item {
+			background: rgba(255, 255, 255, 0.1) !important;
+			color: #fff !important;
+			font-weight: 600;
+		}
+
+		.svg-icon,
+		.material-icons,
+		i {
+			color: inherit !important;
+		}
+	}
+
+	// Section headings / nav group titles inside the dark panel
+	.navigation-title,
+	.navigation-text {
+		color: var(--sn-forest-text-dim) !important;
+	}
+
+	// Brand block inside the dark aside flips to light text
+	.brand-title,
+	.brand-title a {
+		color: #f4efe7 !important;
+	}
+
+	.brand-aside-toggle {
+		color: var(--sn-forest-text-dim) !important;
+
+		&:hover {
+			color: #fff !important;
+			background: rgba(255, 255, 255, 0.1) !important;
+		}
+	}
+
+	// User card / footer text
+	.user-info,
+	.user-name,
+	.user-sub-title {
+		color: var(--sn-forest-text) !important;
+	}
+}
+
+// -----------------------------------------------------------------------------
+// 4. Brand (top-left logo) — warm moss block with amber dot
+// -----------------------------------------------------------------------------
+.brand {
+	.brand-logo {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.brand-title {
+		color: var(--sn-ink) !important;
+		font-family: var(--sn-font-display) !important;
+		font-weight: 600;
+		letter-spacing: -0.015em;
+
+		// "SquareNow" wordmark gets a moss tint on the first word if author
+		// supplied a span; otherwise the whole title is moss
+		.text-primary {
+			color: var(--sn-moss) !important;
+		}
+	}
+
+	.brand-aside-toggle {
+		color: var(--sn-ink-muted) !important;
+		background: transparent !important;
+
+		&:hover {
+			color: var(--sn-moss) !important;
+			background: var(--sn-sand) !important;
+		}
+	}
+}
+
+// -----------------------------------------------------------------------------
+// 5. Header (topbar) — warm white, soft underline
+// -----------------------------------------------------------------------------
+.header {
+	background: var(--sn-white) !important;
+	border-bottom: 1px solid var(--sn-line);
+	box-shadow: var(--sn-shadow-1);
+	min-height: 64px;
+}
+
+.mobile-header {
+	background: var(--sn-white) !important;
+	border-bottom: 1px solid var(--sn-line);
+}
+
+.mobile-header-toggle {
+	color: var(--sn-ink-2) !important;
+	background: transparent !important;
+
+	&:hover {
+		background: var(--sn-sand) !important;
+		color: var(--sn-moss) !important;
+	}
+}
+
+// -----------------------------------------------------------------------------
+// 6. SubHeader — used by nearly every page (titles, filter buttons)
+// -----------------------------------------------------------------------------
+.subheader {
+	background: transparent !important;
+	border-bottom: 1px solid var(--sn-line);
+
+	.subheader-left,
+	.subheader-right {
+		color: var(--sn-ink);
+	}
+}
+
+.headColor,
+.card-label-name,
+.subheader-title,
+.fw-bold {
+	color: var(--sn-ink) !important;
+}
+
+// -----------------------------------------------------------------------------
+// 7. Cards — warm paper with soft warm shadow
+// -----------------------------------------------------------------------------
+.card {
+	background: var(--sn-white) !important;
+	border: 1px solid var(--sn-line) !important;
+	border-radius: var(--sn-r-lg) !important;
+	box-shadow: var(--sn-shadow-1);
+	color: var(--sn-ink);
+
+	&:hover {
+		box-shadow: var(--sn-shadow-2);
+		transition: box-shadow 0.15s ease;
+	}
+
+	.card-header {
+		background: transparent !important;
+		border-bottom: 1px solid var(--sn-line);
+		color: var(--sn-ink);
+		min-height: 4rem;
+
+		.card-title {
+			color: var(--sn-ink) !important;
+		}
+	}
+
+	.card-footer {
+		background: var(--sn-paper) !important;
+		border-top: 1px solid var(--sn-line);
+	}
+}
+
+// "Stretch" cards used for KPI tiles
+.card.dashboard-card,
+.kpi-card,
+.summary-card {
+	background: linear-gradient(180deg, var(--sn-white) 0%, var(--sn-paper) 100%) !important;
+}
+
+// -----------------------------------------------------------------------------
+// 8. Buttons — moss primary, amber secondary, ink dark, soft hover
+// -----------------------------------------------------------------------------
+.btn {
+	border-radius: var(--sn-r-md) !important;
+	font-weight: 600;
+	transition: background-color 0.12s ease, border-color 0.12s ease,
+		color 0.12s ease, transform 0.06s ease;
+
+	&:active {
+		transform: translateY(1px);
+	}
+}
+
+.btn-primary,
+.btn.btn-primary {
+	background-color: var(--sn-moss) !important;
+	border-color: var(--sn-moss) !important;
+	color: #fff !important;
+
+	&:hover,
+	&:focus {
+		background-color: var(--sn-moss-deep) !important;
+		border-color: var(--sn-moss-deep) !important;
+	}
+}
+
+// Light primary — "Add …" header buttons use color='primary' isLight → btn-light-primary
+.btn-light-primary,
+.btn.btn-light-primary {
+	background-color: var(--sn-moss-soft) !important;
+	border-color: var(--sn-moss-soft) !important;
+	color: var(--sn-moss-deep) !important;
+
+	&:hover,
+	&:focus,
+	&:active,
+	&.active {
+		background-color: #c8dbd4 !important;
+		border-color: var(--sn-moss) !important;
+		color: var(--sn-moss-deep) !important;
+	}
+
+	.btn-icon,
+	.svg-icon {
+		color: var(--sn-moss) !important;
+	}
+}
+
+// Solid colored buttons use the "-strong" tones so white button text
+// meets WCAG 2.1 AA contrast (4.5:1+) — the lighter tones are reserved
+// for chips/badges/icons where 3:1 (graphics) is sufficient.
+.btn-secondary {
+	background-color: var(--sn-amber-strong) !important;
+	border-color: var(--sn-amber-strong) !important;
+	color: #fff !important;
+
+	&:hover,
+	&:focus {
+		background-color: #8e4517 !important;
+		border-color: #8e4517 !important;
+	}
+}
+
+.btn-success {
+	background-color: var(--sn-good-strong) !important;
+	border-color: var(--sn-good-strong) !important;
+	color: #fff !important;
+}
+
+.btn-warning {
+	background-color: var(--sn-warn-strong) !important;
+	border-color: var(--sn-warn-strong) !important;
+	color: #fff !important;
+}
+
+.btn-danger {
+	background-color: var(--sn-bad) !important;
+	border-color: var(--sn-bad) !important;
+	color: #fff !important;
+}
+
+.btn-info {
+	background-color: var(--sn-info) !important;
+	border-color: var(--sn-info) !important;
+	color: #fff !important;
+}
+
+.btn-dark {
+	background-color: var(--sn-ink) !important;
+	border-color: var(--sn-ink) !important;
+	color: #fff !important;
+
+	&:hover {
+		background-color: var(--sn-ink-2) !important;
+		border-color: var(--sn-ink-2) !important;
+	}
+}
+
+.btn-light {
+	background-color: var(--sn-sand) !important;
+	border-color: var(--sn-line) !important;
+	color: var(--sn-ink) !important;
+
+	&:hover {
+		background-color: var(--sn-line) !important;
+	}
+}
+
+// Outline variants
+.btn-outline-primary {
+	color: var(--sn-moss) !important;
+	border-color: var(--sn-moss) !important;
+	background: transparent !important;
+
+	&:hover {
+		background-color: var(--sn-moss-soft) !important;
+		color: var(--sn-moss-deep) !important;
+	}
+}
+
+.btn-outline-secondary {
+	color: var(--sn-amber) !important;
+	border-color: var(--sn-amber) !important;
+	background: transparent !important;
+
+	&:hover {
+		background-color: var(--sn-amber-soft) !important;
+		color: var(--sn-amber) !important;
+	}
+}
+
+// -----------------------------------------------------------------------------
+// 9. Forms — soft sand inputs, moss focus ring
+// -----------------------------------------------------------------------------
+.form-control,
+.form-select,
+.input,
+input.form-control,
+textarea.form-control,
+select.form-control,
+select.form-select {
+	background-color: var(--sn-paper) !important;
+	border: 1px solid var(--sn-line) !important;
+	border-radius: var(--sn-r-md) !important;
+	color: var(--sn-ink) !important;
+	transition: border-color 0.12s ease, box-shadow 0.12s ease,
+		background-color 0.12s ease;
+
+	&::placeholder {
+		color: var(--sn-ink-muted) !important;
+	}
+
+	&:focus {
+		background-color: var(--sn-white) !important;
+		border-color: var(--sn-moss) !important;
+		box-shadow: 0 0 0 3px rgba(45, 95, 79, 0.18) !important;
+		outline: none !important;
+	}
+
+	&:disabled,
+	&[readonly] {
+		background-color: var(--sn-sand) !important;
+		color: var(--sn-ink-muted) !important;
+	}
+}
+
+.form-label,
+label {
+	color: var(--sn-ink-2);
+	font-weight: 500;
+}
+
+.form-check-input {
+	border-color: var(--sn-line-strong) !important;
+	background-color: var(--sn-white) !important;
+
+	&:checked {
+		background-color: var(--sn-moss) !important;
+		border-color: var(--sn-moss) !important;
+	}
+
+	&:focus {
+		box-shadow: 0 0 0 3px rgba(45, 95, 79, 0.18) !important;
+	}
+}
+
+// -----------------------------------------------------------------------------
+// 10. Badges & status pills
+// -----------------------------------------------------------------------------
+.badge {
+	border-radius: var(--sn-r-pill) !important;
+	font-weight: 600;
+	letter-spacing: 0.005em;
+}
+
+.bg-primary {
+	background-color: var(--sn-moss) !important;
+}
+.bg-secondary {
+	background-color: var(--sn-amber) !important;
+}
+.bg-success {
+	background-color: var(--sn-good) !important;
+}
+.bg-info {
+	background-color: var(--sn-info) !important;
+}
+.bg-warning {
+	background-color: var(--sn-warn) !important;
+}
+.bg-danger {
+	background-color: var(--sn-bad) !important;
+}
+.bg-dark {
+	background-color: var(--sn-ink) !important;
+}
+.bg-light {
+	background-color: var(--sn-sand) !important;
+	color: var(--sn-ink) !important;
+}
+
+.text-primary {
+	color: var(--sn-moss) !important;
+}
+.text-secondary {
+	color: var(--sn-amber) !important;
+}
+.text-success {
+	color: var(--sn-good) !important;
+}
+.text-info {
+	color: var(--sn-info) !important;
+}
+.text-warning {
+	color: var(--sn-warn) !important;
+}
+.text-danger {
+	color: var(--sn-bad) !important;
+}
+.text-muted {
+	color: var(--sn-ink-muted) !important;
+}
+
+// Soft-tinted "bg-l*" utilities used heavily across pages
+.bg-l10-primary,
+.bg-l25-primary {
+	background-color: var(--sn-moss-soft) !important;
+	color: var(--sn-moss-deep) !important;
+}
+.bg-l10-success,
+.bg-l25-success {
+	background-color: var(--sn-good-soft) !important;
+	color: var(--sn-good) !important;
+}
+.bg-l10-info,
+.bg-l25-info {
+	background-color: var(--sn-info-soft) !important;
+	color: var(--sn-info) !important;
+}
+.bg-l10-warning,
+.bg-l25-warning {
+	background-color: var(--sn-warn-soft) !important;
+	color: var(--sn-warn) !important;
+}
+.bg-l10-danger,
+.bg-l25-danger {
+	background-color: var(--sn-bad-soft) !important;
+	color: var(--sn-bad) !important;
+}
+.bg-l10-secondary,
+.bg-l25-secondary {
+	background-color: var(--sn-amber-soft) !important;
+	color: var(--sn-amber) !important;
+}
+
+// -----------------------------------------------------------------------------
+// 11. Tables
+// -----------------------------------------------------------------------------
+.table {
+	--bs-table-bg: transparent;
+	color: var(--sn-ink);
+	border-color: var(--sn-line);
+
+	thead th,
+	th {
+		background: var(--sn-paper);
+		color: var(--sn-ink-2);
+		font-weight: 600;
+		letter-spacing: 0.01em;
+		border-bottom: 1px solid var(--sn-line-strong) !important;
+	}
+
+	tbody tr {
+		border-bottom: 1px solid var(--sn-line);
+
+		&:hover {
+			background: var(--sn-sand);
+		}
+	}
+
+	tbody td {
+		vertical-align: middle;
+	}
+}
+
+// -----------------------------------------------------------------------------
+// 12. Modals & offcanvas — warm paper, soft warm shadow
+// -----------------------------------------------------------------------------
+.modal-content {
+	background: var(--sn-white) !important;
+	border: 1px solid var(--sn-line) !important;
+	border-radius: var(--sn-r-lg) !important;
+	box-shadow: var(--sn-shadow-3) !important;
+	color: var(--sn-ink);
+}
+
+.modal-header,
+.offcanvas-header {
+	border-bottom: 1px solid var(--sn-line);
+}
+
+.modal-footer,
+.offcanvas-footer {
+	border-top: 1px solid var(--sn-line);
+	background: var(--sn-paper);
+}
+
+.offcanvas {
+	background: var(--sn-white) !important;
+	border-left: 1px solid var(--sn-line) !important;
+	color: var(--sn-ink);
+	box-shadow: var(--sn-shadow-3);
+}
+
+// -----------------------------------------------------------------------------
+// 13. Tabs / Nav-pills
+// -----------------------------------------------------------------------------
+.nav-tabs {
+	border-bottom: 1px solid var(--sn-line);
+
+	.nav-link {
+		color: var(--sn-ink-2);
+		border: none;
+		border-bottom: 2px solid transparent;
+		border-radius: 0;
+		font-weight: 500;
+
+		&:hover {
+			color: var(--sn-moss);
+			background: transparent;
+		}
+
+		&.active {
+			color: var(--sn-moss) !important;
+			background: transparent !important;
+			border-color: transparent transparent var(--sn-moss);
+			font-weight: 600;
+		}
+	}
+}
+
+.nav-pills .nav-link.active,
+.nav-pills .show > .nav-link {
+	background-color: var(--sn-moss-soft) !important;
+	color: var(--sn-moss-deep) !important;
+}
+
+// -----------------------------------------------------------------------------
+// 14. Dropdowns
+// -----------------------------------------------------------------------------
+.dropdown-menu {
+	background: var(--sn-white) !important;
+	border: 1px solid var(--sn-line) !important;
+	border-radius: var(--sn-r-md) !important;
+	box-shadow: var(--sn-shadow-2) !important;
+	color: var(--sn-ink);
+
+	.dropdown-item {
+		color: var(--sn-ink-2);
+		border-radius: var(--sn-r-sm);
+
+		&:hover,
+		&:focus {
+			background-color: var(--sn-sand);
+			color: var(--sn-ink);
+		}
+
+		&.active,
+		&:active {
+			background-color: var(--sn-moss);
+			color: #fff;
+		}
+	}
+
+	.dropdown-divider {
+		border-color: var(--sn-line);
+	}
+}
+
+// -----------------------------------------------------------------------------
+// 15. Alerts & notifications
+// -----------------------------------------------------------------------------
+.alert {
+	border-radius: var(--sn-r-md) !important;
+	border: 1px solid var(--sn-line);
+
+	&.alert-success {
+		background: var(--sn-good-soft);
+		color: var(--sn-good);
+		border-color: var(--sn-good);
+	}
+	&.alert-info {
+		background: var(--sn-info-soft);
+		color: var(--sn-info);
+		border-color: var(--sn-info);
+	}
+	&.alert-warning {
+		background: var(--sn-warn-soft);
+		color: var(--sn-warn);
+		border-color: var(--sn-warn);
+	}
+	&.alert-danger {
+		background: var(--sn-bad-soft);
+		color: var(--sn-bad);
+		border-color: var(--sn-bad);
+	}
+}
+
+.notification {
+	border-radius: var(--sn-r-md) !important;
+	box-shadow: var(--sn-shadow-2);
+}
+
+// -----------------------------------------------------------------------------
+// 16. Pagination
+// -----------------------------------------------------------------------------
+.page-link {
+	color: var(--sn-ink-2) !important;
+	border-color: var(--sn-line) !important;
+	background-color: var(--sn-white) !important;
+
+	&:hover {
+		background-color: var(--sn-sand) !important;
+		color: var(--sn-moss) !important;
+	}
+}
+.page-item.active .page-link {
+	background-color: var(--sn-moss) !important;
+	border-color: var(--sn-moss) !important;
+	color: #fff !important;
+}
+
+// -----------------------------------------------------------------------------
+// 17. Login page polish (it lives outside the shell)
+// -----------------------------------------------------------------------------
+.bg-decoration,
+.login-bg {
+	background:
+		radial-gradient(at 80% 0%, rgba(212, 130, 58, 0.12), transparent 50%),
+		radial-gradient(at 20% 100%, rgba(45, 95, 79, 0.12), transparent 50%),
+		var(--sn-paper) !important;
+}
+
+// -----------------------------------------------------------------------------
+// 18. Small finishes — small dividers, kbd, links
+// -----------------------------------------------------------------------------
+hr {
+	border-color: var(--sn-line) !important;
+	opacity: 1;
+}
+
+a {
+	color: var(--sn-moss);
+
+	&:hover {
+		color: var(--sn-moss-deep);
+	}
+}
+
+kbd {
+	background: var(--sn-sand);
+	color: var(--sn-ink);
+	border: 1px solid var(--sn-line);
+	border-radius: 4px;
+	font-family: var(--sn-font-mono);
+}
+
+// -----------------------------------------------------------------------------
+// 19. SweetAlert2 popups (used for confirmations)
+// -----------------------------------------------------------------------------
+.swal2-popup {
+	border-radius: var(--sn-r-lg) !important;
+	font-family: var(--sn-font-sans) !important;
+	background: var(--sn-white) !important;
+	color: var(--sn-ink) !important;
+	box-shadow: var(--sn-shadow-3) !important;
+}
+.swal2-title {
+	font-family: var(--sn-font-display) !important;
+	color: var(--sn-ink) !important;
+}
+.swal2-actions {
+	gap: 0.5rem;
+	button.swal2-confirm {
+		background-color: var(--sn-moss) !important;
+		border-radius: var(--sn-r-md) !important;
+	}
+	button.swal2-cancel {
+		background-color: var(--sn-sand) !important;
+		color: var(--sn-ink) !important;
+		border-radius: var(--sn-r-md) !important;
+	}
+}
+
+// -----------------------------------------------------------------------------
+// 20. Page transitions & subtle parallax
+// -----------------------------------------------------------------------------
+// Layered effect on every route change:
+//   - foreground (the page content): rises 12px with a hair of scale-up
+//   - mid layer (cards): staggered enter, so the grid "settles" instead of
+//     popping in as a block
+//   - background (the paper-dot field): is `position: fixed`, so as you
+//     scroll the page content moves over a stationary texture — the
+//     classic cheap-parallax effect, no JS, no scroll-timeline.
+//
+// All of this is gated behind `prefers-reduced-motion: no-preference` so
+// the existing section 21h reduced-motion block keeps working.
+// -----------------------------------------------------------------------------
+
+// 20a. Ambient background — a faint dot field that stays put while
+//      content scrolls. Pointer-events:none so it never blocks clicks.
+//      Uses ::before on <body> so it applies app-wide without any markup
+//      changes.
+body::before {
+	content: '';
+	position: fixed;
+	inset: 0;
+	pointer-events: none;
+	background-image: radial-gradient(
+		rgba(26, 24, 20, 0.035) 1px,
+		transparent 1px
+	);
+	background-size: 28px 28px;
+	background-position: 0 0;
+	z-index: 0;
+	// the App shell currently has no stacking context, so we push the
+	// real content above this layer using z-index on body > * below.
+}
+
+body > * {
+	position: relative;
+	z-index: 1;
+}
+
+// 20b. Foreground page enter — slight rise + faint scale so the page
+//      feels like it's "landing" rather than fading in flat.
+@keyframes sn-page-enter {
+	from {
+		opacity: 0;
+		transform: translateY(12px) scale(0.994);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
+
+// 20c. Mid layer — paint a soft halo that rises slower than the
+//      foreground. The two layers moving at different rates is what
+//      sells the parallax.
+@keyframes sn-page-bg-enter {
+	from {
+		opacity: 0;
+		transform: translateY(24px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.page,
+	.page-container,
+	.page-wrapper {
+		animation: sn-page-enter 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+		will-change: opacity, transform;
+		// give Safari/Chrome a clean compositor layer so the transform
+		// doesn't repaint the dot-field behind it.
+		backface-visibility: hidden;
+	}
+
+	// The card grid is the typical "mid layer" — give the children a
+	// short stagger so a row of cards rolls in rather than snapping.
+	.page .row > [class^='col-'],
+	.page .row > [class*=' col-'],
+	.page-container .row > [class^='col-'],
+	.page-container .row > [class*=' col-'],
+	.page-wrapper .row > [class^='col-'],
+	.page-wrapper .row > [class*=' col-'] {
+		animation: sn-page-bg-enter 0.42s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+	}
+
+	// Stagger up to 10 siblings; anything past that lands together to
+	// avoid the impression of a wave that never ends.
+	.page .row > *:nth-child(1),
+	.page-container .row > *:nth-child(1),
+	.page-wrapper .row > *:nth-child(1) {
+		animation-delay: 0ms;
+	}
+	.page .row > *:nth-child(2),
+	.page-container .row > *:nth-child(2),
+	.page-wrapper .row > *:nth-child(2) {
+		animation-delay: 35ms;
+	}
+	.page .row > *:nth-child(3),
+	.page-container .row > *:nth-child(3),
+	.page-wrapper .row > *:nth-child(3) {
+		animation-delay: 70ms;
+	}
+	.page .row > *:nth-child(4),
+	.page-container .row > *:nth-child(4),
+	.page-wrapper .row > *:nth-child(4) {
+		animation-delay: 105ms;
+	}
+	.page .row > *:nth-child(5),
+	.page-container .row > *:nth-child(5),
+	.page-wrapper .row > *:nth-child(5) {
+		animation-delay: 140ms;
+	}
+	.page .row > *:nth-child(6),
+	.page-container .row > *:nth-child(6),
+	.page-wrapper .row > *:nth-child(6) {
+		animation-delay: 175ms;
+	}
+	.page .row > *:nth-child(7),
+	.page-container .row > *:nth-child(7),
+	.page-wrapper .row > *:nth-child(7) {
+		animation-delay: 200ms;
+	}
+	.page .row > *:nth-child(8),
+	.page-container .row > *:nth-child(8),
+	.page-wrapper .row > *:nth-child(8) {
+		animation-delay: 220ms;
+	}
+	.page .row > *:nth-child(9),
+	.page-container .row > *:nth-child(9),
+	.page-wrapper .row > *:nth-child(9) {
+		animation-delay: 235ms;
+	}
+	.page .row > *:nth-child(n + 10),
+	.page-container .row > *:nth-child(n + 10),
+	.page-wrapper .row > *:nth-child(n + 10) {
+		animation-delay: 250ms;
+	}
+
+	// 20d. Subheader sticky lift — when the subheader sticks during
+	//      scroll, lift its shadow a touch so it visually separates from
+	//      the content scrolling beneath. CSS-only via :has() — falls
+	//      back gracefully on Safari < 15.4.
+	.subheader[style*='sticky'],
+	.subheader.sticky-top,
+	.subheader.sticky-top-size {
+		transition: box-shadow 0.2s ease, background-color 0.2s ease;
+		&:hover,
+		&:focus-within {
+			box-shadow: var(--sn-shadow-2);
+		}
+	}
+
+	// 20e. Modal & offcanvas — give the same parallax flavor. The
+	//      backdrop fades from behind, the panel rises into place.
+	.modal.show .modal-dialog,
+	.offcanvas.show {
+		animation: sn-page-enter 0.28s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+	}
+
+	.modal-backdrop.show {
+		animation: sn-backdrop-in 0.22s ease-out both;
+	}
+
+	@keyframes sn-backdrop-in {
+		from {
+			opacity: 0;
+			backdrop-filter: blur(0);
+		}
+		to {
+			opacity: 0.5;
+			backdrop-filter: blur(2px);
+		}
+	}
+
+	// 20f. Soft "pulse" on the primary CTA — tiny, only on hover. Helps
+	//      orient the eye without nagging.
+	.btn-primary:hover,
+	.btn-light-primary:hover,
+	.btn-secondary:hover {
+		transform: translateY(-1px);
+		box-shadow: var(--sn-shadow-2);
+	}
+}
+
+// 20g. Sticky-respect — if the user has reduced-motion turned on, we
+//      already kill all animation in section 21h, but the fixed dot
+//      field below stays put (it's not animated, just decorative).
+//      Nothing else to do here.
+
+// -----------------------------------------------------------------------------
+// 20h. Interactive motion primitives (chat-3 redesign) — shared by the login
+//      scene, product builder, and any page that wants springy feedback.
+//      All of these are inert under prefers-reduced-motion via section 21h.
+// -----------------------------------------------------------------------------
+@keyframes sn-floaty {
+	0%,
+	100% {
+		transform: translateY(0) rotate(var(--rot, 0deg));
+	}
+	50% {
+		transform: translateY(-16px) rotate(calc(var(--rot, 0deg) + 3deg));
+	}
+}
+.floaty {
+	animation: sn-floaty var(--dur, 8s) ease-in-out infinite;
+}
+
+@keyframes sn-shake {
+	10%,
+	90% {
+		transform: translateX(-2px);
+	}
+	20%,
+	80% {
+		transform: translateX(4px);
+	}
+	30%,
+	70% {
+		transform: translateX(-6px);
+	}
+	40%,
+	60% {
+		transform: translateX(6px);
+	}
+	50% {
+		transform: translateX(-4px);
+	}
+}
+.shake {
+	animation: sn-shake 0.45s ease both;
+}
+
+@keyframes sn-pop {
+	0% {
+		transform: scale(0.4);
+		opacity: 0;
+	}
+	70% {
+		transform: scale(1.06);
+		opacity: 1;
+	}
+	100% {
+		transform: scale(1);
+		opacity: 1;
+	}
+}
+.pop {
+	animation: sn-pop 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes sn-rise-in {
+	from {
+		opacity: 0;
+		transform: translateY(14px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+.rise {
+	animation: sn-rise-in 0.35s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+// Cursor-follow layers ease toward their target instead of snapping
+.parallax-smooth {
+	transition: transform 0.3s cubic-bezier(0.15, 0.65, 0.3, 1);
+	will-change: transform;
+}
+
+// Dot fields — dark variant for the dusk login scene / forest panels
+.pattern-dot {
+	background-image: radial-gradient(rgba(26, 24, 20, 0.06) 1px, transparent 1px);
+	background-size: 16px 16px;
+}
+.pattern-dot-light {
+	background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+	background-size: 16px 16px;
+}
+
+.spin {
+	animation: sn-spin 1s linear infinite;
+}
+@keyframes sn-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+// =============================================================================
+// 21. ACCESSIBILITY HARDENING (WCAG 2.1 AA)
+// -----------------------------------------------------------------------------
+// Everything below this banner exists to make the redesigned UI usable for
+// keyboard, screen-reader, low-vision, reduced-motion, and high-contrast
+// users. None of these rules change the visual look for typical users.
+// =============================================================================
+
+// 21a. Stronger, two-ring focus indicators on every interactive surface.
+//     The outer 3px outline + inner 1px white halo stays visible on both
+//     light and dark backgrounds.
+:focus-visible {
+	outline: 3px solid var(--sn-moss) !important;
+	outline-offset: 2px !important;
+	box-shadow: 0 0 0 1px #fff !important;
+	border-radius: 6px;
+}
+
+// On colored solid buttons the focus ring needs to contrast against the
+// button's own color, so we draw a white outline + moss halo instead.
+.btn-primary:focus-visible,
+.btn-success:focus-visible,
+.btn-warning:focus-visible,
+.btn-danger:focus-visible,
+.btn-info:focus-visible,
+.btn-secondary:focus-visible,
+.btn-dark:focus-visible {
+	outline: 3px solid #fff !important;
+	outline-offset: 2px !important;
+	box-shadow: 0 0 0 5px rgba(45, 95, 79, 0.55) !important;
+}
+
+// Avoid focus rings on mouse clicks (browsers handle :focus-visible already,
+// but make sure plain :focus alone doesn't show a custom outline).
+:focus:not(:focus-visible) {
+	outline: none !important;
+	box-shadow: none !important;
+}
+
+// 21b. Minimum touch-target / click-target size — 40x40 px is the practical
+//      desktop floor; AAA spec is 44x44. Apply to anything users tap or
+//      click, but only when the element isn't part of a denser inline run.
+.btn,
+.nav-link,
+.dropdown-toggle,
+.page-link,
+.form-check-input:not([type='radio']):not([type='checkbox']),
+button[type='button']:not(.btn-link):not(.btn-sm),
+button[type='submit']:not(.btn-link):not(.btn-sm) {
+	min-height: 40px;
+}
+
+.form-check-input {
+	width: 1.15em;
+	height: 1.15em;
+	min-width: 1.15em;
+	min-height: 1.15em;
+}
+
+// 21c. Placeholder text — keep it readable. Bootstrap defaults to ~3:1.
+::placeholder,
+.form-control::placeholder,
+.form-select::placeholder {
+	color: var(--sn-ink-muted) !important; // now 4.9:1 on paper
+	opacity: 1 !important;
+}
+
+// 21d. Form fields that fail validation get a visible icon + border, not
+//      colour alone, so the cue is perceivable without color vision.
+.is-invalid,
+.form-control.is-invalid {
+	border-color: var(--sn-bad) !important;
+	border-width: 2px !important;
+	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23B33A2E'><path d='M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0Zm-.75 4.5h1.5v5h-1.5v-5Zm.75 7a1 1 0 1 1 0 2 1 1 0 0 1 0-2Z'/></svg>");
+	background-repeat: no-repeat;
+	background-position: right 10px center;
+	background-size: 16px;
+	padding-right: 36px;
+}
+
+.is-valid,
+.form-control.is-valid {
+	border-color: var(--sn-good-strong) !important;
+	border-width: 2px !important;
+}
+
+// 21f. Skip-to-main-content link — needed for keyboard users to bypass the
+//      sidebar/topbar. Pages can render <a className="visually-hidden-focusable skip-link" href="#main-content">
+//      Skip to main content</a> and it will appear on focus.
+.skip-link {
+	position: fixed;
+	left: 1rem;
+	top: -3rem;
+	z-index: 9999;
+	background: var(--sn-moss);
+	color: #fff;
+	padding: 0.75rem 1.25rem;
+	border-radius: var(--sn-r-md);
+	font-weight: 600;
+	box-shadow: var(--sn-shadow-3);
+	transition: top 0.15s ease-out;
+
+	&:focus,
+	&:focus-visible {
+		top: 1rem;
+		outline: 3px solid #fff !important;
+		outline-offset: 2px;
+	}
+}
+
+// 21g. Visually hidden but reachable by screen readers — pages and
+//      components can use Bootstrap's `.visually-hidden` already, but this
+//      adds the same as `.sr-only` for older code paths that may still
+//      reference the Tailwind/Bootstrap-4 name.
+.sr-only,
+.visually-hidden,
+.visually-hidden-focusable:not(:focus):not(:focus-within) {
+	position: absolute !important;
+	width: 1px !important;
+	height: 1px !important;
+	padding: 0 !important;
+	margin: -1px !important;
+	overflow: hidden !important;
+	clip: rect(0, 0, 0, 0) !important;
+	white-space: nowrap !important;
+	border: 0 !important;
+}
+
+// 21h. Reduced motion — honour the OS setting. Disable the route fade and
+//      every other CSS animation/transition the theme adds.
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.001ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.001ms !important;
+		scroll-behavior: auto !important;
+	}
+
+	.page,
+	.page-container,
+	.page-wrapper {
+		animation: none !important;
+	}
+}
+
+// 21i. Increased contrast — when the user requests more contrast, swap
+//      muted ink for full ink and thicken card / input borders so edges
+//      are unambiguous.
+@media (prefers-contrast: more) {
+	:root {
+		--sn-ink-muted: #3e3830;
+		--sn-line: #1a1814;
+		--sn-line-strong: #1a1814;
+	}
+
+	.card,
+	.modal-content,
+	.dropdown-menu,
+	.offcanvas,
+	.form-control,
+	.form-select,
+	.btn {
+		border-width: 2px !important;
+	}
+
+	.subheader,
+	.aside,
+	.header {
+		border-color: var(--sn-ink) !important;
+	}
+}
+
+// 21j. Forced-colors (Windows High Contrast mode) — let the OS pick the
+//      palette. We strip our background paint and rely on SystemColor
+//      keywords so the user's chosen high-contrast theme wins.
+@media (forced-colors: active) {
+	.card,
+	.modal-content,
+	.dropdown-menu,
+	.offcanvas,
+	.aside,
+	.header,
+	.btn,
+	.form-control,
+	.form-select {
+		background: Canvas !important;
+		color: CanvasText !important;
+		border-color: CanvasText !important;
+		forced-color-adjust: none;
+	}
+
+	:focus-visible {
+		outline: 3px solid Highlight !important;
+		outline-offset: 2px !important;
+		box-shadow: none !important;
+	}
+
+	.btn-primary,
+	.btn-secondary,
+	.btn-success,
+	.btn-warning,
+	.btn-danger,
+	.btn-info,
+	.btn-dark {
+		background: ButtonFace !important;
+		color: ButtonText !important;
+		border: 2px solid ButtonText !important;
+	}
+
+	a {
+		color: LinkText !important;
+	}
+}
+
+// 21k. Disabled state — keep visually muted but still readable.
+//      Bootstrap drops opacity to .65 by default, which is borderline.
+.btn:disabled,
+.btn.disabled,
+button:disabled,
+.form-control:disabled,
+input:disabled,
+select:disabled {
+	opacity: 0.7 !important; // keeps text contrast ≥ 4.5:1 on most surfaces
+	cursor: not-allowed !important;
+}
+
+// 21l. Make the active sidebar item readable by screen readers — the
+//      colored pill + bold are reinforced by an aria-current marker the
+//      navigation component can set; pages that already mark active=true
+//      will pick up the underline below as a non-color cue.
+.aside .navigation-link[aria-current='page'],
+.aside .navigation-link.active {
+	// Amber bar — moss would vanish against the dark forest sidebar.
+	box-shadow: inset 3px 0 0 var(--sn-amber);
+}
+
+// 21m. Tables — zebra contrast and row-hover have to read for both color-
+//      sighted and high-contrast users. Thicker bottom-border instead of
+//      relying only on faint stripes.
+.table > :not(caption) > * > * {
+	border-bottom-width: 1px;
+	border-bottom-color: var(--sn-line);
+}
+
+.table-hover > tbody > tr:hover > * {
+	background-color: var(--sn-sand) !important;
+	color: var(--sn-ink);
+}
+
+// 21n. Body root marker — lets components target the LMS skin without
+//      coupling to body and lets future page-level a11y settings override.
+:root {
+	color-scheme: light;
+}
+
+// =============================================================================
+// 22. UNIFIED CARD MOTION SYSTEM (chat-4 redesign)
+// -----------------------------------------------------------------------------
+// Replicates the login card's parallax feel across the whole app: pointer-driven
+// 3D tilt + moving glare on cards, plus a staggered rise/fade reveal when a page
+// (or a drawer/modal) mounts. Driven entirely by the global MotionLayer
+// controller (src/components/MotionLayer.tsx), which tags eligible `.card`
+// elements with the classes below — so no page markup changes are needed.
+//
+// The controller adds `sn-tilt` to tilt-eligible cards and `sn-reveal` to all
+// cards; everything here is inert under prefers-reduced-motion (section 21h
+// already disables animation globally, and the reveal rule below force-shows).
+// =============================================================================
+@media (prefers-reduced-motion: no-preference) {
+	// ---- Pointer 3D tilt + lift + glare ----
+	.card.sn-tilt {
+		transition: transform 0.35s cubic-bezier(0.2, 0.75, 0.25, 1),
+			box-shadow 0.35s ease;
+		transform-style: preserve-3d;
+		// glare needs a positioning context + clipping to the card radius
+		position: relative;
+	}
+	.card.sn-tilt.sn-tilt-active {
+		transform: perspective(1200px)
+			rotateX(calc(var(--my, 0) * -4deg))
+			rotateY(calc(var(--mx, 0) * 5.5deg)) translateY(-5px);
+		transition: transform 0.12s ease-out, box-shadow 0.35s ease;
+		box-shadow: 0 26px 60px rgba(40, 28, 12, 0.16),
+			0 8px 18px rgba(40, 28, 12, 0.06);
+		z-index: 2;
+	}
+	// Glare overlay — injected as a child span (.sn-glare) by the controller
+	// so it never clobbers a card's own ::before/::after.
+	.card.sn-tilt > .sn-glare {
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
+		pointer-events: none;
+		z-index: 6;
+		opacity: 0;
+		transition: opacity 0.35s ease;
+		background: radial-gradient(
+			420px circle at var(--gx, 50%) var(--gy, 38%),
+			rgba(255, 255, 255, 0.2),
+			rgba(255, 255, 255, 0) 60%
+		);
+	}
+	.card.sn-tilt.sn-tilt-active > .sn-glare {
+		opacity: 1;
+	}
+
+	// ---- Staggered reveal (rise + fade) ----
+	.card.sn-reveal {
+		opacity: 0;
+		transform: translateY(16px);
+		transition: opacity 0.55s cubic-bezier(0.2, 0.75, 0.25, 1),
+			transform 0.55s cubic-bezier(0.2, 0.75, 0.25, 1);
+		// will-change kept off-by-default; the controller toggles it during reveal
+	}
+	.card.sn-reveal.sn-reveal-in {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+// Reduced-motion / fail-safe: a card tagged sn-reveal must NEVER stay hidden.
+// (The controller also force-reveals after a timeout, but this is the CSS
+// backstop in case JS never runs.)
+@media (prefers-reduced-motion: reduce) {
+	.card.sn-reveal {
+		opacity: 1 !important;
+		transform: none !important;
+		transition: none !important;
+	}
+	.card.sn-tilt.sn-tilt-active {
+		transform: none !important;
+	}
+	.card.sn-tilt > .sn-glare {
+		display: none !important;
+	}
+}
+
+// =============================================================================
+// 23. Master-page header search box (.searchBox)
+// -----------------------------------------------------------------------------
+// The header search uses a transparent inline <input> inside a pill container.
+// Section 9's aggressive .form-control override was boxing that input (border +
+// paper bg + radius), making it look like a box-in-a-box. Render it as a single
+// clean pill with a transparent input instead. Applies to every master page.
+// =============================================================================
+.searchBox {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	background: var(--sn-paper);
+	border: 1px solid var(--sn-line-strong);
+	border-radius: var(--sn-r-pill);
+	padding: 2px 14px 2px 10px;
+	min-width: 240px;
+	transition: border-color 0.12s ease, box-shadow 0.12s ease;
+
+	&:focus-within {
+		border-color: var(--sn-moss);
+		box-shadow: 0 0 0 3px rgba(45, 95, 79, 0.15);
+	}
+
+	label {
+		display: inline-flex;
+		align-items: center;
+		margin: 0;
+	}
+
+	.form-control,
+	input.form-control,
+	input[type='search'] {
+		background: transparent !important;
+		border: none !important;
+		box-shadow: none !important;
+		border-radius: 0 !important;
+		height: 38px;
+		padding: 0 4px !important;
+
+		&:focus {
+			background: transparent !important;
+			border: none !important;
+			box-shadow: none !important;
+		}
+	}
+}
+
+// =============================================================================
+// 25. SKELETON SHIMMER — dashboard per-section loading placeholders.
+// Used by DashboardLMS so the screen paints instantly and each section shows a
+// shimmering block until its data arrives (instead of flashing zeros). Inert
+// under prefers-reduced-motion (the gradient just sits static).
+// =============================================================================
+.sn-shimmer {
+	position: relative;
+	overflow: hidden;
+	background: #efe9df;
+	background-image: linear-gradient(
+		90deg,
+		rgba(235, 227, 213, 0) 0%,
+		rgba(255, 255, 255, 0.65) 50%,
+		rgba(235, 227, 213, 0) 100%
+	);
+	background-size: 200% 100%;
+	animation: sn-shimmer-slide 1.25s ease-in-out infinite;
+}
+
+@keyframes sn-shimmer-slide {
+	0% {
+		background-position: 200% 0;
+	}
+	100% {
+		background-position: -200% 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.sn-shimmer {
+		animation: none;
+	}
+}
+
+// =============================================================================
+// 26. SWITCHES — app-wide fix. Bootstrap's `.form-switch` pill toggle was being
+// clobbered by the generic `.form-check-input` rules above (min-height:40px +
+// 1.15em square sizing, meant for checkboxes/buttons), collapsing the pill into
+// a tall narrow blob with a mismatched thumb. Restore a proper LMS pill toggle:
+// neutral track when off, moss track when on, white thumb that slides. The
+// two-class selector outranks the generic one-class rules; !important guards the
+// few that also use it.
+// =============================================================================
+$sn-switch-thumb: "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e";
+
+.form-switch {
+	min-height: auto;
+
+	.form-check-input {
+		flex-shrink: 0;
+		width: 2.5em !important;
+		min-width: 2.5em !important;
+		height: 1.4em !important;
+		min-height: 1.4em !important;
+		margin-top: 0.1em;
+		border-radius: 2em !important;
+		background-color: var(--sn-line-strong) !important;
+		border-color: var(--sn-line-strong) !important;
+		background-image: url("#{$sn-switch-thumb}") !important;
+		background-position: left center;
+		background-size: 1.15em 1.15em;
+		background-repeat: no-repeat;
+		box-shadow: none;
+		transition:
+			background-position 0.15s ease,
+			background-color 0.15s ease,
+			border-color 0.15s ease;
+		cursor: pointer;
+
+		&:checked {
+			background-color: var(--sn-moss) !important;
+			border-color: var(--sn-moss) !important;
+			background-position: right center;
+			background-image: url("#{$sn-switch-thumb}") !important;
+		}
+
+		&:focus {
+			box-shadow: 0 0 0 3px rgba(45, 95, 79, 0.18) !important;
+		}
+
+		&:disabled {
+			opacity: 0.5;
+			cursor: not-allowed;
+		}
+	}
+}
+
+// =============================================================================
+// 26b. RADIO BUTTONS — restore circular shape. The generic min-height:40px rule
+// (meant for buttons/links) was stretching radios into tall narrow ovals when
+// combined with the 1.15em width sizing above.
+// =============================================================================
+.form-check-input[type='radio'] {
+	flex-shrink: 0;
+	width: 1.15em !important;
+	min-width: 1.15em !important;
+	height: 1.15em !important;
+	min-height: 1.15em !important;
+	border-radius: 50% !important;
+	margin-top: 0.25em;
+	cursor: pointer;
+}
+
+// =============================================================================
+// 27. NUMBER INPUTS — kill the browser spinner (up/down arrows) app-wide.
+// Several reported issues (RL-0003, BL-0002, and others) ask to "remove the up
+// and down arrow in number fields". It was previously patched per-page in four
+// separate stylesheets (auto-loan-proposal, goldLoanProposal, business, product)
+// which left every other page with the spinner. Apply it once, globally, so
+// every <input type="number"> in the app is consistent. Loaded last, so it wins.
+// =============================================================================
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+input[type='number'] {
+	-moz-appearance: textfield;
+	appearance: textfield;
+}

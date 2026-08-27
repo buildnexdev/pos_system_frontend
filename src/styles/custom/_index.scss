@@ -1,0 +1,96 @@
+//
+// Custom
+//
+
+@use 'sass:map';
+
+.scroll-margin {
+	scroll-margin-top: map.get($header, height) + map.get($subheader, height) +
+		map.get($page, padding-y);
+}
+
+.sticky-top-size {
+	top: map.get($header, height) + map.get($subheader, height) + map.get($page, padding-y);
+}
+
+.border-transparent {
+	--#{$prefix}border-opacity: 0;
+}
+
+// Prevent scrolling when focusing on input fields in denomination modal
+.no-scroll-input {
+	scroll-margin: 0 !important;
+	scroll-padding: 0 !important;
+	
+	&:focus {
+		scroll-margin: 0 !important;
+		scroll-padding: 0 !important;
+		scroll-behavior: auto !important;
+	}
+	
+	&:focus-visible {
+		scroll-margin: 0 !important;
+		scroll-padding: 0 !important;
+		outline-offset: 0 !important;
+	}
+}
+
+// Prevent scroll behavior on modal inputs
+.modal .no-scroll-input {
+	scroll-margin: 0 !important;
+	scroll-padding: 0 !important;
+	scroll-behavior: auto !important;
+	
+	&:focus {
+		scroll-margin: 0 !important;
+		scroll-padding: 0 !important;
+		scroll-behavior: auto !important;
+	}
+	
+	&:focus-visible {
+		scroll-margin: 0 !important;
+		scroll-padding: 0 !important;
+		outline-offset: 0 !important;
+	}
+}
+
+// Prevent scroll-into-view for modal body with inputs
+.modal-body {
+	&:has(.no-scroll-input:focus) {
+		scroll-behavior: auto !important;
+	}
+}
+
+// Additional styles to prevent modal scrolling
+.modal-dialog:not(.modal-dialog-scrollable) {
+	overflow: visible !important;
+}
+
+.modal-content {
+	overflow: visible !important;
+}
+
+// Prevent body scroll when modal is open
+body.modal-open {
+	overflow: hidden !important;
+	position: fixed !important;
+	width: 100% !important;
+}
+
+// Specific styles for denomination modal
+.modal[data-modal="denomination"] {
+	.modal-dialog {
+		overflow: visible !important;
+		scroll-behavior: auto !important;
+	}
+	
+	.modal-content {
+		overflow: visible !important;
+		scroll-behavior: auto !important;
+	}
+	
+	.modal-body {
+		overflow: visible !important;
+		scroll-behavior: auto !important;
+	}
+}
