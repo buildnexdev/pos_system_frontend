@@ -1,0 +1,30 @@
+/**
+ * Author: Nandhakumar
+ * Version: 0.0.1
+ * Desc: role redux types
+ * Edit Date: 2026-11-12
+ */
+
+export const RoleActionTypes = {
+  FETCH_LIST_REQUEST: 'ROLE_FETCH_LIST_REQUEST',
+  FETCH_LIST_SUCCESS: 'ROLE_FETCH_LIST_SUCCESS',
+  FETCH_LIST_FAILURE: 'ROLE_FETCH_LIST_FAILURE',
+  FETCH_ONE_REQUEST: 'ROLE_FETCH_ONE_REQUEST',
+  FETCH_ONE_SUCCESS: 'ROLE_FETCH_ONE_SUCCESS',
+  FETCH_ONE_FAILURE: 'ROLE_FETCH_ONE_FAILURE',
+  SAVE_REQUEST: 'ROLE_SAVE_REQUEST',
+  SAVE_SUCCESS: 'ROLE_SAVE_SUCCESS',
+  SAVE_FAILURE: 'ROLE_SAVE_FAILURE',
+  DELETE_REQUEST: 'ROLE_DELETE_REQUEST',
+  DELETE_SUCCESS: 'ROLE_DELETE_SUCCESS',
+  DELETE_FAILURE: 'ROLE_DELETE_FAILURE',
+  RESET_RESPONSE: 'ROLE_RESET_RESPONSE',
+} as const;
+
+export interface RoleState {
+  items: any[];
+  current: any | null;
+  loading: boolean;
+  error: string | null;
+  lastResponse: any | null;
+}

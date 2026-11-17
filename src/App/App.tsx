@@ -1,187 +1,127 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import React, { useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ThemeProvider } from 'react-jss';
-import { useNavigate } from 'react-router-dom';
+/**
+ * App.tsx
+ * The main entry point for the application.
+ * Handles routing, authentication, and the overall application structure.
+ */
+import { useEffect } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { ReactNotifications } from 'react-notifications-component';
-import { useFullscreen } from 'react-use';
-import { TourProvider } from '@reactour/tour';
-import dayjs from 'dayjs';
-import localizedFormat from 'dayjs/plugin/localizedFormat';
-import relativeTime from 'dayjs/plugin/relativeTime';
-import { ToastContainer } from 'react-toastify';
-import ThemeContext from '../contexts/themeContext';
-import Wrapper from '../layout/Wrapper/Wrapper';
-import Portal from '../layout/Portal/Portal';
-import useDarkMode from '../hooks/useDarkMode';
-import COLORS from '../common/data/enumColors';
-import { getOS } from '../helpers/helpers';
-import steps, { styles } from '../steps';
-import AsideRoutes from '../layout/Aside/AsideRoutes';
-import { ToastCloseButton } from '../components/bootstrap/Toasts';
-import SimpleAlert from '../components/common/SimpleAlert';
-import AlertManager from '../redux/_common/alertManager';
-import SquareNowSplash from '../components/SquareNowSplash';
-import SquareNowScreenLock from '../components/SquareNowScreenLock';
-import MotionLayer from '../components/MotionLayer';
-import { WidgetsProvider } from '../contexts/widgetsContext';
-import { selectUserCompanyDetailsData } from '../redux/login/login.selector';
-import { loginPages } from '../menu';
-import { userSignInLogOutStart } from '../redux/login/login.action';
-import { useLocation } from 'react-router-dom';
+import ProtectedRoute from '../components/shop/ProtectedRoute';
+import PanelLayout from '../components/panel/PanelLayout';
+import Login from '../pages/Auth/Login';
+import ChangePassword from '../pages/Auth/ChangePassword';
+import DashboardPage from '../pages/Panel/dashboard/dashboard';
+import StaffPage from '../pages/Panel/userControl/staff/staff';
+import StaffFormPage from '../pages/Panel/userControl/staff/staffForm';
+import RolesPage from '../pages/Panel/userControl/roles/roles';
+import AccessControlPage from '../pages/Panel/userControl/accessControl/accessControl';
+import CompaniesPage from '../pages/Panel/userControl/companies/companies';
+import PaymentHistoryPage from '../pages/Panel/superAdmin/paymentHistory/paymentHistory';
+import InvoiceAgreementPage from '../pages/Panel/superAdmin/invoiceAgreement/invoiceAgreement';
+import ManageTicketsPage from '../pages/Panel/superAdmin/manageTickets/manageTickets';
+import ProductTypesPage from '../pages/Panel/catalog/productTypes/productTypes';
+import SuppliersPage from '../pages/Panel/catalog/suppliers/suppliers';
+import BranchesPage from '../pages/Panel/catalog/branches/branches';
+import WarehousesPage from '../pages/Panel/catalog/warehouses/warehouses';
+import StockInventoryPage from '../pages/Panel/catalog/stock/stock';
+import CatalogProductsPage from '../pages/Panel/catalog/products/products';
+import OrdersPage from '../pages/Panel/sales/orders/orders';
+import OrderFormPage from '../pages/Panel/sales/orders/orderForm';
+import PaymentGatewaysPage from '../pages/Panel/sales/paymentGateways/paymentGateways';
+import BillingPage from '../pages/Panel/sales/billing/billing';
+import CustomersPage from '../pages/Panel/sales/customers/customers';
+import DropshippingPage from '../pages/Panel/sales/dropshipping/dropshipping';
+import ReportsView from '../pages/Panel/report/_shared/ReportsView';
+import FinanceBooksView from '../pages/Panel/finance/_shared/FinanceBooksView';
+import { loadUserRequest, loginSuccess } from '../redux/auth/auth.action';
+import { getToken, getUser } from '../common/jwt';
+import { authService } from '../redux/auth/auth.services';
+import { RootState } from '../redux/store';
+import { isPanelUser, isSuperAdminUser } from '../utils/access';
 
+/**
+ * HomeRedirect component
+ * Redirects the user to the appropriate page based on their authentication status and role.
+ */
+function HomeRedirect() {
+  const { isAuthenticated, user } = useSelector((s: RootState) => s.auth);
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (user?.mustChangePassword) return <Navigate to="/change-password" replace />;
+  if (isSuperAdminUser(user)) return <Navigate to="/panel/companies" replace />;
+  if (isPanelUser(user)) return <Navigate to="/panel" replace />;
+  return <Navigate to="/login" replace />;
+}
 
-const App = () => {
-	getOS();
+/**
+ * App component
+ * The main application component that handles routing and authentication.
+ */
+export default function App() {
+  const dispatch = useDispatch();
+  const { isAuthenticated, loading } = useSelector((s: RootState) => s.auth);
 
-	dayjs.extend(localizedFormat);
-	dayjs.extend(relativeTime);
-	const location = useLocation();
+  useEffect(() => {
+    const token = getToken();
+    const user = getUser();
+    const rights = authService.getStoredRights();
+    if (token && user) {
+      dispatch(loginSuccess(user, token, rights));
+      dispatch(loadUserRequest());
+    }
+  }, [dispatch]);
 
-	const navigate = useNavigate();
-	const [showAlert, setShowAlert] = useState(false);
-	const dispatch = useDispatch();
-	// const loginRespsArr = useSelector(selectCurrentDecodedUser);
+  // While restoring session, keep login gate for first paint if no auth
+  if (!isAuthenticated && loading) {
+    return <Login />;
+  }
 
-	const loginRespsArr = useSelector(selectUserCompanyDetailsData);
-	// const handleOnClick = useCallback(() => navigate('/'), [navigate]);
-	/**
-	 * Dark Mode
-	 */
-	const { themeStatus, darkModeStatus } = useDarkMode();
-	const loginPath = `/${loginPages.login.path.replace(/^\//, '')}`;
-	const currentPath = location.pathname;
-	const theme = {
-		theme: themeStatus,
-		primary: COLORS.PRIMARY.code,
-		secondary: COLORS.SECONDARY.code,
-		success: COLORS.SUCCESS.code,
-		info: COLORS.INFO.code,
-		warning: COLORS.WARNING.code,
-		danger: COLORS.DANGER.code,
-		dark: COLORS.DARK.code,
-		light: COLORS.LIGHT.code,
-	};
+  return (
+    <Routes>
+      <Route path="/login" element={isAuthenticated ? <HomeRedirect /> : <Login />} />
+      <Route
+        path="/change-password"
+        element={isAuthenticated ? <ChangePassword /> : <Navigate to="/login" replace />}
+      />
+      <Route path="/" element={<HomeRedirect />} />
 
-	useEffect(() => {
-		if (loginRespsArr === null || loginRespsArr === undefined || loginRespsArr.length === 0) {
-			navigate(`../${loginPages.login.path}`, { replace: true });
-		}
-		if (currentPath === loginPath) {
-			// Clear storage
-			localStorage.clear();
-			dispatch(userSignInLogOutStart());
-			if (currentPath !== loginPath) {
-				navigate(loginPath);
-			}
-		}
-	}, [navigate, currentPath]);
+      <Route
+        path="/panel"
+        element={
+          <ProtectedRoute panelOnly>
+            <PanelLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<ProtectedRoute panelOnly moduleKey="dashboard"><DashboardPage /></ProtectedRoute>} />
+        <Route path="roles" element={<ProtectedRoute panelOnly moduleKey="role"><RolesPage /></ProtectedRoute>} />
+        <Route path="access-control" element={<ProtectedRoute panelOnly moduleKey="access_control"><AccessControlPage /></ProtectedRoute>} />
+        <Route path="staff" element={<ProtectedRoute panelOnly moduleKey="staff"><StaffPage /></ProtectedRoute>} />
+        <Route path="staff/new" element={<ProtectedRoute panelOnly moduleKey="staff" action="create"><StaffFormPage /></ProtectedRoute>} />
+        <Route path="staff/:id" element={<ProtectedRoute panelOnly moduleKey="staff"><StaffFormPage /></ProtectedRoute>} />
+        <Route path="companies" element={<ProtectedRoute panelOnly moduleKey="company"><CompaniesPage /></ProtectedRoute>} />
+        <Route path="payment-history" element={<ProtectedRoute panelOnly moduleKey="payment_history"><PaymentHistoryPage /></ProtectedRoute>} />
+        <Route path="invoice-agreement" element={<ProtectedRoute panelOnly moduleKey="invoice_agreement"><InvoiceAgreementPage /></ProtectedRoute>} />
+        <Route path="manage-tickets" element={<ProtectedRoute panelOnly moduleKey="manage_ticket"><ManageTicketsPage /></ProtectedRoute>} />
+        <Route path="product-types" element={<ProtectedRoute panelOnly moduleKey="product_type"><ProductTypesPage /></ProtectedRoute>} />
+        <Route path="suppliers" element={<ProtectedRoute panelOnly moduleKey="supplier"><SuppliersPage /></ProtectedRoute>} />
+        <Route path="branches" element={<ProtectedRoute panelOnly moduleKey="branch"><BranchesPage /></ProtectedRoute>} />
+        <Route path="warehouses" element={<ProtectedRoute panelOnly moduleKey="warehouse"><WarehousesPage /></ProtectedRoute>} />
+        <Route path="products" element={<ProtectedRoute panelOnly moduleKey="product"><CatalogProductsPage /></ProtectedRoute>} />
+        <Route path="stock" element={<ProtectedRoute panelOnly moduleKey="product"><StockInventoryPage /></ProtectedRoute>} />
+        <Route path="orders" element={<ProtectedRoute panelOnly moduleKey="order"><OrdersPage /></ProtectedRoute>} />
+        <Route path="orders/new" element={<ProtectedRoute panelOnly moduleKey="order" action="create"><OrderFormPage /></ProtectedRoute>} />
+        <Route path="orders/:id/edit" element={<ProtectedRoute panelOnly moduleKey="order" action="edit"><OrderFormPage /></ProtectedRoute>} />
+        <Route path="customers" element={<ProtectedRoute panelOnly moduleKey="customer"><CustomersPage /></ProtectedRoute>} />
+        <Route path="payment-gateways" element={<ProtectedRoute panelOnly moduleKey="payment_gateway"><PaymentGatewaysPage /></ProtectedRoute>} />
+        <Route path="billing" element={<ProtectedRoute panelOnly moduleKey="billing"><BillingPage /></ProtectedRoute>} />
+        <Route path="dropshipping" element={<ProtectedRoute panelOnly moduleKey="dropshipping"><DropshippingPage /></ProtectedRoute>} />
+        <Route path="reports" element={<Navigate to="/panel/reports/users" replace />} />
+        <Route path="reports/:type" element={<ProtectedRoute panelOnly moduleKey="report"><ReportsView /></ProtectedRoute>} />
+        <Route path="finance" element={<Navigate to="/panel/finance/accounts" replace />} />
+        <Route path="finance/:type" element={<ProtectedRoute panelOnly moduleKey="finance"><FinanceBooksView /></ProtectedRoute>} />
+      </Route>
 
-	// Set up AlertManager
-	useEffect(() => {
-		AlertManager.setShowAlertFunction(setShowAlert);
-	}, []);
-
-	// Restore body/html scroll before paint on every route change (fixes layout/scrollbar wrong until reload after visiting pages that lock scroll e.g. modals)
-	useLayoutEffect(() => {
-		document.body.classList.remove('modal-open');
-		document.body.style.removeProperty('overflow');
-		document.body.style.removeProperty('overflow-x');
-		document.body.style.removeProperty('overflow-y');
-		document.body.style.removeProperty('position');
-		document.body.style.removeProperty('width');
-		document.body.style.removeProperty('padding-right');
-		document.documentElement.style.removeProperty('overflow');
-		document.documentElement.style.removeProperty('overflow-x');
-		document.documentElement.style.removeProperty('overflow-y');
-	}, [location.pathname]);
-
-	// Force layout recalculation for all pages on route change (fixes scrollbar overlap / extra margin until reload across the app)
-	useEffect(() => {
-		const id = requestAnimationFrame(() => {
-			window.dispatchEvent(new Event('resize'));
-		});
-		return () => cancelAnimationFrame(id);
-	}, [location.pathname]);
-
-	useEffect(() => {
-		if (darkModeStatus) {
-			document.documentElement.setAttribute('theme', 'dark');
-			document.documentElement.setAttribute('data-bs-theme', 'dark');
-		}
-		return () => {
-			document.documentElement.removeAttribute('theme');
-			document.documentElement.removeAttribute('data-bs-theme');
-		};
-	}, [darkModeStatus]);
-
-	/**
-	 * Full Screen
-	 */
-	const { fullScreenStatus, setFullScreenStatus } = useContext(ThemeContext);
-	const ref = useRef(null);
-	useFullscreen(ref, fullScreenStatus, {
-		onClose: () => setFullScreenStatus(false),
-	});
-
-	const ReactNotificationsComponent = ReactNotifications as unknown as React.ComponentType<any>;
-
-	/**
-	 * Modern Design
-	 */
-	useLayoutEffect(() => {
-		// if (process.env.REACT_APP_MODERN_DESGIN === 'true') {
-		// 	document.body.classList.add('modern-design');
-		// } else {
-		// 	document.body.classList.remove('modern-design');
-		// }
-		document.body.classList.remove('modern-design');
-	});
-
-	return (
-		<ThemeProvider theme={theme}>
-			{/*
-			 * Skip-to-main-content link — first focusable element in the
-			 * document so keyboard / screen-reader users can bypass the
-			 * sidebar and topbar in one keystroke. The link only appears
-			 * once it receives focus (see .skip-link in the LMS theme).
-			 */}
-			<a className='skip-link' href='#main-content'>
-				Skip to main content
-			</a>
-			{/* App-wide card parallax/tilt + reveal motion (login-card feel
-			    replicated across every page). Renders nothing; drives motion
-			    on .card elements, re-runs per route, reduced-motion safe. */}
-			<MotionLayer />
-			<SquareNowSplash />
-			{/* App-wide inactivity lock — fires after 30s of no user activity and
-			    requires a Google Authenticator code to unlock. Suppressed on the
-			    login screen. */}
-			<SquareNowScreenLock />
-			<TourProvider steps={steps} styles={styles} showNavigation={false} showBadge={false}>
-				<WidgetsProvider>
-					<div
-						ref={ref}
-						className='app'
-						style={{
-							backgroundColor: fullScreenStatus ? 'var(--bs-body-bg)' : undefined,
-							zIndex: fullScreenStatus ? 1 : undefined,
-							overflow: fullScreenStatus ? 'scroll' : undefined,
-						}}>
-						<AsideRoutes />
-						<Wrapper />
-					</div>
-				</WidgetsProvider>
-				<Portal id='portal-notification'>
-					<ReactNotificationsComponent />
-				</Portal>
-				<ToastContainer closeButton={ToastCloseButton} toastClassName='toast show' />
-
-				{/* Simple Alert Modal for 401 errors */}
-				<SimpleAlert show={showAlert} onClose={() => setShowAlert(false)} />
-			</TourProvider>
-		</ThemeProvider>
-	);
-};
-
-export default App;
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
+  );
+}

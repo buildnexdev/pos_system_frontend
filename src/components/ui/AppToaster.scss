@@ -1,0 +1,124 @@
+/* BuildNex ShopOS — dark accent-bar toasts */
+
+.bnx-toaster {
+  z-index: 100000 !important;
+}
+
+.bnx-toast {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.7rem !important;
+  max-width: min(380px, calc(100vw - 1.25rem)) !important;
+  min-height: 52px !important;
+  padding: 0.8rem 1rem 0.8rem 1.05rem !important;
+  border-radius: 10px !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: #0f172a !important;
+  color: #f8fafc !important;
+  box-shadow: 0 16px 40px rgba(2, 6, 23, 0.45) !important;
+  font-family: 'DM Sans', system-ui, sans-serif !important;
+  font-size: 0.875rem !important;
+  font-weight: 550 !important;
+  line-height: 1.35 !important;
+  overflow: hidden !important;
+}
+
+.bnx-toast::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: #64748b;
+}
+
+.bnx-toast > div {
+  margin: 0 !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+}
+
+.bnx-toast-success {
+  background: linear-gradient(135deg, #0b3d38 0%, #0f172a 55%) !important;
+}
+
+.bnx-toast-success::before {
+  background: #2dd4bf;
+}
+
+.bnx-toast-error {
+  background: linear-gradient(135deg, #4c1515 0%, #0f172a 55%) !important;
+}
+
+.bnx-toast-error::before {
+  background: #f87171;
+}
+
+.bnx-toast-loading {
+  background: linear-gradient(135deg, #0c2a44 0%, #0f172a 55%) !important;
+}
+
+.bnx-toast-loading::before {
+  background: #38bdf8;
+}
+
+.bnx-toast-blank::before {
+  background: #94a3b8;
+}
+
+.bnx-toast-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  flex-shrink: 0;
+}
+
+.bnx-toast-icon.is-success {
+  background: rgba(45, 212, 191, 0.18);
+  color: #5eead4;
+}
+
+.bnx-toast-icon.is-error {
+  background: rgba(248, 113, 113, 0.18);
+  color: #fca5a5;
+}
+
+.bnx-toast-icon.is-loading {
+  background: rgba(56, 189, 248, 0.18);
+  color: #7dd3fc;
+}
+
+.bnx-toast-icon.is-info {
+  background: rgba(148, 163, 184, 0.18);
+  color: #cbd5e1;
+}
+
+.bnx-toast-spin {
+  animation: bnx-toast-spin 0.8s linear infinite;
+}
+
+@keyframes bnx-toast-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes bnx-toast-slide {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) translateX(0);
+  }
+}
+
+.bnx-toast {
+  animation: bnx-toast-slide 0.26s ease !important;
+}

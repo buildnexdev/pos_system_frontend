@@ -1,0 +1,33 @@
+/**
+ * Author: Nandhakumar
+ * Version: 0.0.1
+ * Desc: supplier API services
+ * Edit Date: 2026-11-12
+ */
+
+import apiClient from '../../services/apiClient';
+
+export const supplierServices = {
+  http: apiClient,
+  list: async (params: any = {}) => {
+    const { data } = await apiClient.get('/panel/suppliers', { params });
+    return data.items || data.items || [];
+  },
+  getOne: async (id: string | number) => {
+    const { data } = await apiClient.get(`/panel/suppliers/${id}`);
+    return data.item || data.supplier || data;
+  },
+  save: async (payload: any) => {
+    const id = payload?.id;
+    if (id) {
+      const { data } = await apiClient.put(`/panel/suppliers/${id}`, payload);
+      return data;
+    }
+    const { data } = await apiClient.post('/panel/suppliers', payload);
+    return data;
+  },
+  remove: async (id: string | number) => {
+    const { data } = await apiClient.delete(`/panel/suppliers/${id}`);
+    return data;
+  },
+};

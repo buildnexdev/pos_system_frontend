@@ -11,16 +11,17 @@ export const AuthActionTypes = {
   LOAD_USER_REQUEST: 'LOAD_USER_REQUEST',
   LOAD_USER_SUCCESS: 'LOAD_USER_SUCCESS',
   LOAD_USER_FAILURE: 'LOAD_USER_FAILURE',
+  SET_RIGHTS: 'SET_RIGHTS',
 } as const;
 
-export const loginRequest = (email: string, password: string) => ({
+export const loginRequest = (login: string, password: string) => ({
   type: AuthActionTypes.LOGIN_REQUEST,
-  payload: { email, password },
+  payload: { login, password },
 });
 
-export const loginSuccess = (user: any, token: string) => ({
+export const loginSuccess = (user: any, token: string, rights: any[] = []) => ({
   type: AuthActionTypes.LOGIN_SUCCESS,
-  payload: { user, token },
+  payload: { user, token, rights },
 });
 
 export const loginFailure = (error: string) => ({
@@ -28,14 +29,8 @@ export const loginFailure = (error: string) => ({
   payload: error,
 });
 
-export const logoutRequest = () => ({
-  type: AuthActionTypes.LOGOUT_REQUEST,
-});
-
-export const logoutSuccess = () => ({
-  type: AuthActionTypes.LOGOUT_SUCCESS,
-});
-
+export const logoutRequest = () => ({ type: AuthActionTypes.LOGOUT_REQUEST });
+export const logoutSuccess = () => ({ type: AuthActionTypes.LOGOUT_SUCCESS });
 export const logoutFailure = (error: string) => ({
   type: AuthActionTypes.LOGOUT_FAILURE,
   payload: error,
@@ -46,9 +41,9 @@ export const registerRequest = (userData: any) => ({
   payload: userData,
 });
 
-export const registerSuccess = (user: any, token: string) => ({
+export const registerSuccess = (user: any, token: string, rights: any[] = []) => ({
   type: AuthActionTypes.REGISTER_SUCCESS,
-  payload: { user, token },
+  payload: { user, token, rights },
 });
 
 export const registerFailure = (error: string) => ({
@@ -56,16 +51,19 @@ export const registerFailure = (error: string) => ({
   payload: error,
 });
 
-export const loadUserRequest = () => ({
-  type: AuthActionTypes.LOAD_USER_REQUEST,
-});
+export const loadUserRequest = () => ({ type: AuthActionTypes.LOAD_USER_REQUEST });
 
-export const loadUserSuccess = (user: any) => ({
+export const loadUserSuccess = (user: any, rights: any[] = []) => ({
   type: AuthActionTypes.LOAD_USER_SUCCESS,
-  payload: user,
+  payload: { user, rights },
 });
 
 export const loadUserFailure = (error: string) => ({
   type: AuthActionTypes.LOAD_USER_FAILURE,
   payload: error,
+});
+
+export const setRights = (rights: any[]) => ({
+  type: AuthActionTypes.SET_RIGHTS,
+  payload: rights,
 });

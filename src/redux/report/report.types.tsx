@@ -1,0 +1,30 @@
+/**
+ * Author: Nandhakumar
+ * Version: 0.0.1
+ * Desc: report redux types
+ * Edit Date: 2026-11-12
+ */
+
+export const ReportActionTypes = {
+  FETCH_LIST_REQUEST: 'REPORT_FETCH_LIST_REQUEST',
+  FETCH_LIST_SUCCESS: 'REPORT_FETCH_LIST_SUCCESS',
+  FETCH_LIST_FAILURE: 'REPORT_FETCH_LIST_FAILURE',
+  FETCH_ONE_REQUEST: 'REPORT_FETCH_ONE_REQUEST',
+  FETCH_ONE_SUCCESS: 'REPORT_FETCH_ONE_SUCCESS',
+  FETCH_ONE_FAILURE: 'REPORT_FETCH_ONE_FAILURE',
+  SAVE_REQUEST: 'REPORT_SAVE_REQUEST',
+  SAVE_SUCCESS: 'REPORT_SAVE_SUCCESS',
+  SAVE_FAILURE: 'REPORT_SAVE_FAILURE',
+  DELETE_REQUEST: 'REPORT_DELETE_REQUEST',
+  DELETE_SUCCESS: 'REPORT_DELETE_SUCCESS',
+  DELETE_FAILURE: 'REPORT_DELETE_FAILURE',
+  RESET_RESPONSE: 'REPORT_RESET_RESPONSE',
+} as const;
+
+export interface ReportState {
+  items: any[];
+  current: any | null;
+  loading: boolean;
+  error: string | null;
+  lastResponse: any | null;
+}

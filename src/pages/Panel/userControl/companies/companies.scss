@@ -1,0 +1,181 @@
+@import '../../catalog/suppliers/suppliers.scss';
+
+/* Company form: nearly full-screen offcanvas */
+.spr-overlay .spr-offcanvas {
+  width: 90vw;
+  max-width: 90vw;
+}
+
+.spr-password-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.spr-password-wrap .spr-input {
+  width: 100%;
+  padding-right: 2.75rem;
+}
+
+.spr-password-toggle {
+  position: absolute;
+  right: 0.55rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  padding: 0.25rem;
+  border-radius: 6px;
+}
+
+.spr-password-toggle:hover {
+  color: #0f172a;
+  background: #f1f5f9;
+}
+
+.spr-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.spr-doc-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.spr-doc-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.85rem;
+  background: #f8fafc;
+}
+
+.spr-doc-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.65rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.spr-doc-remove {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 0;
+  background: transparent;
+  color: #dc2626;
+  cursor: pointer;
+  font-size: 0.78rem;
+  padding: 0.2rem 0.35rem;
+  border-radius: 6px;
+}
+
+.spr-doc-remove:hover {
+  background: #fee2e2;
+}
+
+.spr-doc-add {
+  align-self: flex-start;
+}
+
+.spr-doc-file-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.spr-doc-file-row .spr-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.spr-upload-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  padding: 0.55rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid #fdba74;
+  background: #fff7ed;
+  color: #c2410c;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.spr-upload-btn input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.spr-upload-btn.is-busy {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.spr-upload-btn:hover {
+  background: #ffedd5;
+}
+
+.spr-doc-preview {
+  margin-top: 0.15rem;
+}
+
+.spr-doc-preview-img {
+  display: inline-block;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  max-width: 220px;
+}
+
+.spr-doc-preview-img img {
+  display: block;
+  width: 100%;
+  max-height: 140px;
+  object-fit: contain;
+  background: #f8fafc;
+}
+
+.spr-doc-preview-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #0f766e;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.spr-doc-preview-link:hover {
+  background: #f0fdfa;
+  border-color: #99f6e4;
+}
+
+.spr-logo-preview {
+  max-width: 120px;
+}
+
+.spr-logo-preview img {
+  max-height: 96px;
+  object-fit: contain;
+}

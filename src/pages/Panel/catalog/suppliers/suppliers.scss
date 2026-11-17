@@ -1,0 +1,584 @@
+.spr-page {
+  animation: ptypeFade 0.3s ease;
+}
+
+.spr-panel {
+  background: #fff;
+  border-radius: 1.1rem;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+}
+
+.spr-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1.1rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: linear-gradient(180deg, #ffffff, #f8fafc);
+}
+
+.spr-hero {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.spr-hero-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(135deg, #ea580c, #fb923c);
+  box-shadow: 0 10px 24px rgba(234, 88, 12, 0.28);
+}
+
+.spr-hero h1 {
+  margin: 0;
+  font-size: 1.45rem;
+  font-weight: 700;
+}
+
+.spr-hero p {
+  margin: 0.15rem 0 0;
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
+.spr-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.spr-search {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 0.45rem 0.8rem;
+  min-width: 220px;
+}
+
+.spr-search input {
+  border: 0;
+  outline: none;
+  width: 100%;
+  font-size: 0.85rem;
+  background: transparent;
+}
+
+.spr-search:focus-within {
+  border-color: #fb923c;
+  box-shadow: 0 0 0 4px rgba(234, 88, 12, 0.12);
+}
+
+.spr-view-toggle {
+  display: inline-flex;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.spr-view-toggle button {
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  width: 38px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.spr-view-toggle button.is-active {
+  background: #ea580c;
+  color: #fff;
+}
+
+.spr-btn-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  background: linear-gradient(135deg, #0f172a, #1e293b 55%, #ea580c);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.18);
+}
+
+.spr-loading {
+  display: grid;
+  place-items: center;
+  gap: 0.75rem;
+  padding: 3rem 1rem;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.spr-table-wrap {
+  overflow-x: auto;
+}
+
+.spr-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.spr-table th {
+  padding: 0.85rem 0.9rem;
+  background: #f8fafc;
+  color: #334155;
+  font-weight: 700;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.th-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.th-hash { color: #64748b; }
+.th-type { color: #ea580c; }
+.th-desc { color: #0284c7; }
+.th-status { color: #16a34a; }
+.th-edit { color: #c2410c; }
+.th-delete { color: #dc2626; }
+
+.spr-table td {
+  padding: 0.85rem 0.9rem;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.spr-row {
+  animation: ptypeRise 0.35s ease both;
+}
+
+.spr-row:hover {
+  background: #fff7ed;
+}
+
+.spr-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.spr-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.16);
+}
+
+.spr-avatar.lg {
+  width: 48px;
+  height: 48px;
+  font-size: 1.05rem;
+}
+
+.spr-slug {
+  margin: 0.15rem 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #94a3b8;
+  font-size: 0.75rem;
+}
+
+.spr-desc {
+  max-width: 320px;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.spr-badge {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 0.18rem 0.6rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.spr-badge.is-on {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.spr-badge.is-off {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.icon-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 0;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.icon-action:hover {
+  transform: scale(1.08);
+}
+
+.icon-action.edit {
+  background: #ffedd5;
+  color: #c2410c;
+  width: auto;
+  padding: 0 0.55rem;
+}
+
+.icon-action.delete {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.spr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.spr-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  padding: 1rem;
+  background: linear-gradient(180deg, #ffffff, #fff7ed);
+  animation: ptypeRise 0.4s ease both;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.spr-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.1);
+}
+
+.spr-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.spr-card h3 {
+  margin: 0.7rem 0 0.25rem;
+  font-size: 1.05rem;
+}
+
+.spr-card-desc {
+  margin: 0.55rem 0 0.85rem;
+  color: #64748b;
+  font-size: 0.84rem;
+  min-height: 2.4rem;
+}
+
+.spr-card-actions {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.spr-empty {
+  padding: 2rem;
+  text-align: center;
+  color: #64748b;
+}
+
+.spr-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  pointer-events: none;
+}
+
+.spr-overlay.is-open {
+  pointer-events: auto;
+}
+
+.spr-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  opacity: 0;
+  transition: opacity 0.28s ease;
+}
+
+.spr-overlay.is-open .spr-backdrop {
+  opacity: 1;
+}
+
+.spr-offcanvas {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: min(820px, 92vw);
+  height: 100%;
+  background: #fff;
+  box-shadow: -20px 0 50px rgba(15, 23, 42, 0.18);
+  transform: translateX(100%);
+  transition: transform 0.32s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.spr-offcanvas.is-open {
+  transform: translateX(0);
+}
+
+.spr-oc-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1.1rem 1.15rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: linear-gradient(180deg, #fff7ed, #ffffff);
+}
+
+.spr-oc-title {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+}
+
+.spr-oc-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(135deg, #ea580c, #fb923c);
+}
+
+.spr-oc-title h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.spr-oc-title p {
+  margin: 0.15rem 0 0;
+  color: #94a3b8;
+  font-size: 0.78rem;
+}
+
+.spr-oc-close {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #64748b;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.spr-oc-body {
+  padding: 1rem 1.15rem 1.25rem;
+  display: grid;
+  gap: 0.85rem;
+  overflow-y: auto;
+  background:
+    radial-gradient(circle at top right, rgba(251, 146, 60, 0.12), transparent 28%),
+    #f8fafc;
+}
+
+.spr-section {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 0.9rem;
+}
+
+.spr-section h3 {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.spr-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.spr-form-grid .span-2 {
+  grid-column: span 2;
+}
+
+.spr-oc-body label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.c-cyan { color: #0891b2; }
+.c-blue { color: #2563eb; }
+
+.spr-contact {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.82rem;
+  color: #475569;
+}
+
+.spr-contact span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.lbl-icon { flex-shrink: 0; }
+.c-orange { color: #ea580c; }
+.c-violet { color: #7c3aed; }
+.c-teal { color: #0f766e; }
+.c-sky { color: #0284c7; }
+.c-rose { color: #e11d48; }
+.c-slate { color: #64748b; }
+
+.spr-input {
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 0.7rem 0.85rem;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.spr-input:focus {
+  border-color: #fb923c;
+  box-shadow: 0 0 0 4px rgba(234, 88, 12, 0.12);
+  background: #fff;
+}
+
+.spr-input:disabled,
+.spr-input[readonly] {
+  background: #f1f5f9;
+  color: #64748b;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.spr-error {
+  margin: 0.3rem 0 0;
+  color: #dc2626;
+  font-size: 0.75rem;
+}
+
+.spr-active {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.88rem !important;
+  color: #334155 !important;
+}
+
+.spr-oc-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  margin-top: 0.35rem;
+}
+
+.spr-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 0;
+  border-radius: 12px;
+  padding: 0.7rem 1rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.spr-btn.ghost {
+  background: #eef2f7;
+  color: #475569;
+}
+
+.spr-btn.primary {
+  background: #ea580c;
+  color: #fff;
+}
+
+.spr-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.spr-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 999px;
+  animation: ptypeSpin 0.7s linear infinite;
+}
+
+@keyframes ptypeFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ptypeRise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ptypeSpin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 900px) {
+  .spr-form-grid,
+  .spr-form-grid .span-2 {
+    grid-template-columns: 1fr;
+    grid-column: span 1;
+  }
+
+  .spr-search {
+    min-width: 100%;
+  }
+}

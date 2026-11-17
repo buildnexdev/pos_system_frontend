@@ -1,0 +1,434 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap');
+
+.bnx-login {
+  --ink: #14110f;
+  --paper: #fff8f1;
+  --panel: rgba(255, 248, 241, 0.94);
+  --line: #e5d5c5;
+  --muted: #7a6a5c;
+  --accent: #c45c26;
+  --accent-deep: #9a3f12;
+  --focus: #1f6f5b;
+
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  font-family: 'Figtree', sans-serif;
+  color: var(--ink);
+  background: #0c0a09;
+  overflow: hidden;
+}
+
+.bnx-login-stage {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 420px);
+  align-items: stretch;
+  isolation: isolate;
+}
+
+.bnx-login-visual {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.bnx-login-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 35% center;
+  transform: scale(1.06);
+  animation: bnxKenBurns 22s ease-in-out infinite alternate;
+}
+
+.bnx-login-visual-shade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(12, 10, 9, 0.78) 0%, rgba(12, 10, 9, 0.45) 42%, rgba(12, 10, 9, 0.2) 62%, rgba(12, 10, 9, 0.55) 100%),
+    linear-gradient(180deg, rgba(12, 10, 9, 0.35) 0%, transparent 28%, rgba(12, 10, 9, 0.55) 100%);
+}
+
+.bnx-login-orbit {
+  position: absolute;
+  width: 46vmax;
+  height: 46vmax;
+  right: -12vmax;
+  bottom: -18vmax;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(196, 92, 38, 0.28) 0%, transparent 68%);
+  animation: bnxOrbit 14s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+.bnx-login-grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.22;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: soft-light;
+}
+
+.bnx-login-hero {
+  position: relative;
+  z-index: 1;
+  grid-column: 1;
+  align-self: end;
+  padding: clamp(1.75rem, 5vw, 4rem);
+  max-width: 34rem;
+  color: #fff8f1;
+  animation: bnxRise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.bnx-login-logo {
+  display: block;
+  width: min(168px, 52%);
+  height: auto;
+  margin-bottom: 1.1rem;
+  filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.35));
+}
+
+.bnx-login-brand {
+  margin: 0 0 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #f0b27a;
+}
+
+.bnx-login-title {
+  margin: 0;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 800;
+  font-size: clamp(2.6rem, 6vw, 4.2rem);
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+}
+
+.bnx-login-title span {
+  display: block;
+  color: #ffd7b0;
+}
+
+.bnx-login-lead {
+  margin: 1rem 0 0;
+  max-width: 28ch;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: rgba(255, 248, 241, 0.78);
+  font-weight: 500;
+}
+
+.bnx-login-panel {
+  position: relative;
+  z-index: 2;
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1rem;
+  margin: 0;
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  background: var(--panel);
+  border-left: 1px solid rgba(229, 213, 197, 0.55);
+  backdrop-filter: blur(14px);
+  animation: bnxSlide 0.85s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
+}
+
+.bnx-login-panel.is-scroll {
+  justify-content: flex-start;
+  overflow-y: auto;
+}
+
+.bnx-login-form-head h2 {
+  margin: 0;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 1.7rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.bnx-login-form-head p {
+  margin: 0.4rem 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.bnx-login-form {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.bnx-field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.bnx-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.bnx-field span {
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+}
+
+.bnx-field input,
+.bnx-textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 0.85rem;
+  padding: 0.82rem 0.95rem;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.92rem;
+  outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.bnx-field input::placeholder,
+.bnx-textarea::placeholder {
+  color: #a8998b;
+}
+
+.bnx-field input:focus,
+.bnx-textarea:focus {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px rgba(31, 111, 91, 0.12);
+}
+
+.bnx-field em {
+  font-style: normal;
+  color: #c2410c;
+  font-size: 0.74rem;
+}
+
+.bnx-password-wrap {
+  position: relative;
+  display: grid;
+}
+
+.bnx-password-wrap input {
+  padding-right: 2.7rem;
+}
+
+.bnx-password-toggle {
+  position: absolute;
+  right: 0.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  width: 2.1rem;
+  height: 2.1rem;
+  display: grid;
+  place-items: center;
+  border-radius: 0.55rem;
+  cursor: pointer;
+}
+
+.bnx-password-toggle:hover {
+  color: var(--ink);
+  background: rgba(196, 92, 38, 0.08);
+}
+
+.bnx-login-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -0.25rem;
+}
+
+.bnx-text-link {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--accent-deep);
+  cursor: pointer;
+}
+
+.bnx-text-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.bnx-text-link:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bnx-login-switch {
+  margin: 0.1rem 0 0;
+  text-align: center;
+  font-size: 0.86rem;
+  color: var(--muted);
+}
+
+.bnx-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 0;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  width: fit-content;
+}
+
+.bnx-back-link:hover {
+  color: var(--ink);
+}
+
+.bnx-mail-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--accent-deep);
+  font-weight: 700;
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.bnx-mail-pill:hover {
+  text-decoration: underline;
+}
+
+.bnx-textarea {
+  resize: vertical;
+  min-height: 4.4rem;
+}
+
+.bnx-login-submit {
+  margin-top: 0.15rem;
+  border: 0;
+  border-radius: 0.9rem;
+  padding: 0.92rem 1rem;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #fff8f1;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--accent-deep), var(--accent));
+  box-shadow: 0 12px 28px rgba(154, 63, 18, 0.22);
+  transition: transform 0.18s ease, filter 0.18s ease;
+}
+
+.bnx-login-submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.bnx-login-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+@keyframes bnxRise {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bnxSlide {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes bnxKenBurns {
+  from {
+    transform: scale(1.06) translate(0, 0);
+  }
+  to {
+    transform: scale(1.14) translate(-1.8%, -1.2%);
+  }
+}
+
+@keyframes bnxOrbit {
+  from {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.7;
+  }
+  to {
+    transform: translate(-4%, -3%) scale(1.08);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 900px) {
+  .bnx-login {
+    overflow: auto;
+  }
+
+  .bnx-login-stage {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(38vh, 44vh) auto;
+  }
+
+  .bnx-login-hero {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: end;
+    padding-bottom: 1.25rem;
+  }
+
+  .bnx-login-panel {
+    grid-column: 1;
+    grid-row: 2;
+    border-left: 0;
+    border-top: 1px solid rgba(229, 213, 197, 0.7);
+    animation-name: bnxRise;
+  }
+
+  .bnx-login-title {
+    font-size: clamp(2.1rem, 9vw, 3rem);
+  }
+
+  .bnx-field-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bnx-login-hero,
+  .bnx-login-panel,
+  .bnx-login-photo,
+  .bnx-login-orbit {
+    animation: none !important;
+  }
+}

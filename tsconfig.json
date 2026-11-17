@@ -19,24 +19,21 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-
+    "types": ["vite/client"]
   },
   "include": [
     "src/main.tsx",
     "src/App/**/*",
-    "src/pages/Auth/**/*",
-    "src/pages/Dashboard/**/*",
-    "src/pages/Branch/**/*",
-    "src/pages/Agent/**/*",
-    "src/pages/Customer/**/*",
-    "src/pages/Reports/**/*",
-    "src/pages/Import/**/*",
-    "src/pages/AuditLogs/**/*",
-    "src/layout/Layout.tsx",
+    "src/pages/**/*",
+    "src/layout/**/*",
     "src/store/**/*",
     "src/redux/**/*",
     "src/common/**/*",
     "src/components/**/*",
+    "src/utils/**/*",
+    "src/services/**/*",
+    "src/hooks/**/*",
+    "src/helpers/**/*",
     "src/vite-env.d.ts"
   ],
   "references": [{ "path": "./tsconfig.node.json" }]

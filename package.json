@@ -1,5 +1,5 @@
 {
-  "name": "dsrdnidhi-datahub-frontend",
+  "name": "buildnex-kadai-frontend",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -25,7 +25,9 @@
     "crypto-js": "^4.2.0",
     "date-fns": "^3.3.1",
     "dayjs": "^1.11.21",
+    "formik": "^2.4.9",
     "framer-motion": "^12.42.2",
+    "jsbarcode": "^3.12.3",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.400.0",
     "material-react-table": "^2.12.0",
@@ -42,11 +44,13 @@
     "redux-saga": "^1.5.0",
     "tailwind-merge": "^2.2.1",
     "xlsx": "0.18.5",
+    "yup": "^1.7.1",
     "zod": "^3.22.4",
     "zustand": "^4.5.0"
   },
   "devDependencies": {
     "@types/crypto-js": "^4.2.2",
+    "@types/jsbarcode": "^3.11.4",
     "@types/node": "^26.1.1",
     "@types/react": "^18.2.56",
     "@types/react-dom": "^18.2.19",
@@ -58,6 +62,7 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
     "postcss": "^8.4.35",
+    "sass": "^1.108.2",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.2.2",
     "vite": "^5.1.4"

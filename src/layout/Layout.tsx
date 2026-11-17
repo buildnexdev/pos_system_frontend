@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-
-import Logo from '../assets/Logo/logo.png'
-
+import Logo from '../assets/Logo/buildnex-shopos-logo.png'
 interface LayoutProps {
   children: React.ReactNode
 }
@@ -99,7 +97,7 @@ export default function Layout({ children }: LayoutProps) {
         <div className="flex flex-col flex-1 min-h-0 bg-white border-r border-gray-200">
           <div className="flex items-center h-16 px-6 border-b border-gray-200">
             <img 
-              src="/src/assets/Logo/logo.png" 
+              src={Logo} 
               alt="DS RD NITHI Logo" 
               className="h-10 w-auto mr-3"
             />

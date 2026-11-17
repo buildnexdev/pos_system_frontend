@@ -1,31 +1,42 @@
 import { takeEvery, put, call } from 'redux-saga/effects';
 import { AuthActionTypes } from './auth.action.tsx';
-import { authService } from './auth.service.tsx';
+import { authService } from './auth.services.tsx';
+import { getToken } from '../../common/jwt';
 
 function* login(action: any): Generator {
   try {
-    const { user, token } = yield call(
+    const data: any = yield call(
       authService.login,
-      action.payload.email,
+      action.payload.login || action.payload.email,
       action.payload.password
     );
-    // Store encrypted auth data
-    authService.storeAuthData(user, token);
-    yield put({ type: AuthActionTypes.LOGIN_SUCCESS, payload: { user, token } });
+    authService.storeAuthData(data.user, data.token, data.rights || []);
+    yield put({
+      type: AuthActionTypes.LOGIN_SUCCESS,
+      payload: { user: data.user, token: data.token, rights: data.rights || [] },
+    });
   } catch (error: any) {
+    const message =
+      error.response?.data?.message ||
+      (error.message === 'Network Error'
+        ? 'Cannot reach API. Start backend on port 5000 and restart Vite.'
+        : error.message) ||
+      'Login failed';
     yield put({
       type: AuthActionTypes.LOGIN_FAILURE,
-      payload: error.response?.data?.message || error.message || 'Login failed',
+      payload: message,
     });
   }
 }
 
 function* register(action: any): Generator {
   try {
-    const { user, token } = yield call(authService.register, action.payload);
-    // Store encrypted auth data
-    authService.storeAuthData(user, token);
-    yield put({ type: AuthActionTypes.REGISTER_SUCCESS, payload: { user, token } });
+    const data: any = yield call(authService.register, action.payload);
+    authService.storeAuthData(data.user, data.token, data.rights || []);
+    yield put({
+      type: AuthActionTypes.REGISTER_SUCCESS,
+      payload: { user: data.user, token: data.token, rights: data.rights || [] },
+    });
   } catch (error: any) {
     yield put({
       type: AuthActionTypes.REGISTER_FAILURE,
@@ -36,22 +47,30 @@ function* register(action: any): Generator {
 
 function* logout() {
   try {
-    yield call(authService.logout);
-    yield put({ type: AuthActionTypes.LOGOUT_SUCCESS });
-  } catch (error: any) {
-    yield put({
-      type: AuthActionTypes.LOGOUT_FAILURE,
-      payload: error.response?.data?.message || error.message || 'Logout failed',
-    });
+    yield call(authService.logoutRemote);
+  } catch {
+    /* ignore remote logout errors */
   }
+  try {
+    yield call(authService.logout);
+  } catch {
+    /* ignore */
+  }
+  yield put({ type: AuthActionTypes.LOGOUT_SUCCESS });
 }
 
 function* loadUser(): Generator {
   try {
-    const user = yield call(authService.loadUser);
-    yield put({ type: AuthActionTypes.LOAD_USER_SUCCESS, payload: user });
+    const data: any = yield call(authService.loadUser);
+    const token = getToken();
+    if (data.user && token) {
+      authService.storeAuthData(data.user, token, data.rights || []);
+    }
+    yield put({
+      type: AuthActionTypes.LOAD_USER_SUCCESS,
+      payload: { user: data.user, rights: data.rights || [] },
+    });
   } catch (error: any) {
-    // Clear auth data on error
     authService.clearAuthData();
     yield put({
       type: AuthActionTypes.LOAD_USER_FAILURE,

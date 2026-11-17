@@ -1,0 +1,28 @@
+/**
+ * Author: Nandhakumar
+ * Version: 0.0.1
+ * Desc: Customer orders redux action types and state
+ * Edit Date: 2026-11-12
+ */
+export const OrdersActionTypes = {
+  PLACE_ORDER_REQUEST: 'ORDERS_PLACE_REQUEST',
+  PLACE_ORDER_SUCCESS: 'ORDERS_PLACE_SUCCESS',
+  PLACE_ORDER_FAILURE: 'ORDERS_PLACE_FAILURE',
+  FETCH_ORDERS_REQUEST: 'ORDERS_FETCH_LIST_REQUEST',
+  FETCH_ORDERS_SUCCESS: 'ORDERS_FETCH_LIST_SUCCESS',
+  FETCH_ORDERS_FAILURE: 'ORDERS_FETCH_LIST_FAILURE',
+  FETCH_ORDER_REQUEST: 'ORDERS_FETCH_ONE_REQUEST',
+  FETCH_ORDER_SUCCESS: 'ORDERS_FETCH_ONE_SUCCESS',
+  FETCH_ORDER_FAILURE: 'ORDERS_FETCH_ONE_FAILURE',
+  CANCEL_ORDER_REQUEST: 'ORDERS_CANCEL_REQUEST',
+  CANCEL_ORDER_SUCCESS: 'ORDERS_CANCEL_SUCCESS',
+  CANCEL_ORDER_FAILURE: 'ORDERS_CANCEL_FAILURE',
+} as const;
+
+export interface OrdersState {
+  items: any[];
+  current: any | null;
+  loading: boolean;
+  error: string | null;
+  lastResponse: any | null;
+}

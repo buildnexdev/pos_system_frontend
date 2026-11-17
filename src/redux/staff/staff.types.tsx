@@ -1,0 +1,30 @@
+/**
+ * Author: Nandhakumar
+ * Version: 0.0.1
+ * Desc: staff redux types
+ * Edit Date: 2026-11-12
+ */
+
+export const StaffActionTypes = {
+  FETCH_LIST_REQUEST: 'STAFF_FETCH_LIST_REQUEST',
+  FETCH_LIST_SUCCESS: 'STAFF_FETCH_LIST_SUCCESS',
+  FETCH_LIST_FAILURE: 'STAFF_FETCH_LIST_FAILURE',
+  FETCH_ONE_REQUEST: 'STAFF_FETCH_ONE_REQUEST',
+  FETCH_ONE_SUCCESS: 'STAFF_FETCH_ONE_SUCCESS',
+  FETCH_ONE_FAILURE: 'STAFF_FETCH_ONE_FAILURE',
+  SAVE_REQUEST: 'STAFF_SAVE_REQUEST',
+  SAVE_SUCCESS: 'STAFF_SAVE_SUCCESS',
+  SAVE_FAILURE: 'STAFF_SAVE_FAILURE',
+  DELETE_REQUEST: 'STAFF_DELETE_REQUEST',
+  DELETE_SUCCESS: 'STAFF_DELETE_SUCCESS',
+  DELETE_FAILURE: 'STAFF_DELETE_FAILURE',
+  RESET_RESPONSE: 'STAFF_RESET_RESPONSE',
+} as const;
+
+export interface StaffState {
+  items: any[];
+  current: any | null;
+  loading: boolean;
+  error: string | null;
+  lastResponse: any | null;
+}

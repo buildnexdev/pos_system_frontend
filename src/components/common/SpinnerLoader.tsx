@@ -1,5 +1,5 @@
 import React from 'react'
-import Logo from '../../assets/Logo/logo.png'
+import Logo from '../../assets/Logo/buildnex-shopos-logo.png'
 import { cn } from '../../common/cn.tsx'
 
 interface SpinnerLoaderProps {

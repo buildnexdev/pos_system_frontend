@@ -1,0 +1,30 @@
+/**
+ * Author: Nandhakumar
+ * Version: 0.0.1
+ * Desc: stock redux types
+ * Edit Date: 2026-11-12
+ */
+
+export const StockActionTypes = {
+  FETCH_LIST_REQUEST: 'STOCK_FETCH_LIST_REQUEST',
+  FETCH_LIST_SUCCESS: 'STOCK_FETCH_LIST_SUCCESS',
+  FETCH_LIST_FAILURE: 'STOCK_FETCH_LIST_FAILURE',
+  FETCH_ONE_REQUEST: 'STOCK_FETCH_ONE_REQUEST',
+  FETCH_ONE_SUCCESS: 'STOCK_FETCH_ONE_SUCCESS',
+  FETCH_ONE_FAILURE: 'STOCK_FETCH_ONE_FAILURE',
+  SAVE_REQUEST: 'STOCK_SAVE_REQUEST',
+  SAVE_SUCCESS: 'STOCK_SAVE_SUCCESS',
+  SAVE_FAILURE: 'STOCK_SAVE_FAILURE',
+  DELETE_REQUEST: 'STOCK_DELETE_REQUEST',
+  DELETE_SUCCESS: 'STOCK_DELETE_SUCCESS',
+  DELETE_FAILURE: 'STOCK_DELETE_FAILURE',
+  RESET_RESPONSE: 'STOCK_RESET_RESPONSE',
+} as const;
+
+export interface StockState {
+  items: any[];
+  current: any | null;
+  loading: boolean;
+  error: string | null;
+  lastResponse: any | null;
+}
