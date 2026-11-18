@@ -1,6 +1,6 @@
 {
-  "installCommand": "rm -rf node_modules && npm install",
-  "buildCommand": "npm run build",
+  "installCommand": "rm -rf node_modules && npm install --include=dev",
+  "buildCommand": "node ./node_modules/vite/bin/vite.js build",
   "framework": "vite",
   "outputDirectory": "dist"
 }
