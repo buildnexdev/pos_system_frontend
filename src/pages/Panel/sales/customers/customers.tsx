@@ -33,29 +33,44 @@ import {
 import { customerServices } from '../../../../redux/customer/customer.services';
 import { RootState } from '../../../../redux/store';
 import { hasRight } from '../../../../utils/access';
-import { phoneField, pincodeField } from '../../../../utils/fieldValidators';
+import { phoneField, pincodeField, gstinField, panField } from '../../../../utils/fieldValidators';
 import { Loader } from '../../../../components/ui/Loader';
+import PincodeInput from '../../../../components/ui/PincodeInput';
 import './customers.scss';
 
 const schema = Yup.object({
   name: Yup.string().required('Customer name is required'),
   phone: phoneField(true),
+  whatsapp: phoneField(false),
   email: Yup.string().email('Invalid email'),
+  gender: Yup.string(),
   address: Yup.string().required('Address is required'),
+  landmark: Yup.string(),
   city: Yup.string(),
   state: Yup.string(),
   pincode: pincodeField(false),
+  gstin: gstinField(false),
+  pan: panField(false),
+  date_of_birth: Yup.string(),
+  notes: Yup.string().max(500, 'Notes must be under 500 characters'),
   is_active: Yup.boolean(),
 });
 
 const emptyCustomer = {
   name: '',
   phone: '',
+  whatsapp: '',
   email: '',
+  gender: '',
   address: '',
+  landmark: '',
   city: '',
   state: '',
   pincode: '',
+  gstin: '',
+  pan: '',
+  date_of_birth: '',
+  notes: '',
   is_active: true,
 };
 
@@ -69,6 +84,15 @@ function customerColor(name: string) {
 function money(n: unknown) {
   const v = Number(n) || 0;
   return v.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+}
+
+function toDateInput(value: unknown) {
+  if (!value) return '';
+  const s = String(value);
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+  const d = new Date(s);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toISOString().slice(0, 10);
 }
 
 export default function CustomersPage() {
@@ -120,9 +144,12 @@ export default function CustomersPage() {
     return (
       String(item.name || '').toLowerCase().includes(term) ||
       String(item.phone || '').toLowerCase().includes(term) ||
+      String(item.whatsapp || '').toLowerCase().includes(term) ||
       String(item.email || '').toLowerCase().includes(term) ||
       String(item.city || '').toLowerCase().includes(term) ||
-      String(item.address || '').toLowerCase().includes(term)
+      String(item.address || '').toLowerCase().includes(term) ||
+      String(item.gstin || '').toLowerCase().includes(term) ||
+      String(item.pan || '').toLowerCase().includes(term)
     );
   });
 
@@ -424,6 +451,13 @@ export default function CustomersPage() {
                     ? {
                         ...emptyCustomer,
                         ...editing,
+                        gender: editing.gender || '',
+                        whatsapp: editing.whatsapp || '',
+                        landmark: editing.landmark || '',
+                        gstin: editing.gstin || '',
+                        pan: editing.pan || '',
+                        date_of_birth: toDateInput(editing.date_of_birth),
+                        notes: editing.notes || '',
                         is_active: editing.is_active !== 0 && editing.is_active !== false,
                       }
                     : emptyCustomer
@@ -435,11 +469,18 @@ export default function CustomersPage() {
                       id: editing?.id || editing?.userID,
                       name: values.name,
                       phone: values.phone,
+                      whatsapp: values.whatsapp || null,
                       email: values.email || null,
+                      gender: values.gender || null,
                       address: values.address,
+                      landmark: values.landmark || null,
                       city: values.city || null,
                       state: values.state || null,
                       pincode: values.pincode || null,
+                      gstin: values.gstin || null,
+                      pan: values.pan || null,
+                      date_of_birth: values.date_of_birth || null,
+                      notes: values.notes || null,
                       is_active: !!values.is_active,
                     };
                     await customerServices.save(payload);
@@ -453,7 +494,7 @@ export default function CustomersPage() {
                   }
                 }}
               >
-                {({ errors, touched, isSubmitting }) => (
+                {({ values, setFieldValue, errors, touched, isSubmitting }) => (
                   <Form className="cst-oc-body">
                     <div className="cst-form-grid">
                       <label>
@@ -464,6 +505,15 @@ export default function CustomersPage() {
                         )}
                       </label>
                       <label>
+                        Gender
+                        <Field as="select" name="gender" className="cst-input">
+                          <option value="">Select</option>
+                          <option value="male">Male</option>
+                          <option value="female">Female</option>
+                          <option value="other">Other</option>
+                        </Field>
+                      </label>
+                      <label>
                         Phone
                         <Field name="phone" className="cst-input" placeholder="10-digit mobile" />
                         {touched.phone && errors.phone && (
@@ -471,32 +521,90 @@ export default function CustomersPage() {
                         )}
                       </label>
                       <label>
+                        WhatsApp
+                        <Field name="whatsapp" className="cst-input" placeholder="Optional WhatsApp no." />
+                        {touched.whatsapp && errors.whatsapp && (
+                          <p className="cst-error">{String(errors.whatsapp)}</p>
+                        )}
+                      </label>
+                      <label className="span-2">
                         Email (optional)
                         <Field name="email" className="cst-input" placeholder="email@example.com" />
                         {touched.email && errors.email && (
                           <p className="cst-error">{String(errors.email)}</p>
                         )}
                       </label>
-                      <label>
+                      <label className="span-2">
                         Address
                         <Field name="address" className="cst-input" placeholder="Street / area" />
                         {touched.address && errors.address && (
                           <p className="cst-error">{String(errors.address)}</p>
                         )}
                       </label>
-                      <label>
-                        City
-                        <Field name="city" className="cst-input" placeholder="City" />
-                      </label>
-                      <label>
-                        State
-                        <Field name="state" className="cst-input" placeholder="State" />
+                      <label className="span-2">
+                        Landmark
+                        <Field name="landmark" className="cst-input" placeholder="Near temple / shop / junction" />
                       </label>
                       <label>
                         Pincode
-                        <Field name="pincode" className="cst-input" placeholder="6-digit pincode" />
+                        <PincodeInput
+                          className="cst-input"
+                          value={values.pincode}
+                          setFieldValue={setFieldValue}
+                        />
                         {touched.pincode && errors.pincode && (
                           <p className="cst-error">{String(errors.pincode)}</p>
+                        )}
+                      </label>
+                      <label>
+                        Date of birth
+                        <Field type="date" name="date_of_birth" className="cst-input" />
+                      </label>
+                      <label>
+                        City
+                        <Field
+                          name="city"
+                          className="cst-input is-readonly"
+                          readOnly
+                          tabIndex={-1}
+                          placeholder="Auto from pincode"
+                        />
+                      </label>
+                      <label>
+                        State
+                        <Field
+                          name="state"
+                          className="cst-input is-readonly"
+                          readOnly
+                          tabIndex={-1}
+                          placeholder="Auto from pincode"
+                        />
+                      </label>
+                      <label>
+                        GSTIN
+                        <Field name="gstin" className="cst-input" maxLength={15} placeholder="22AAAAA0000A1Z5" />
+                        {touched.gstin && errors.gstin && (
+                          <p className="cst-error">{String(errors.gstin)}</p>
+                        )}
+                      </label>
+                      <label>
+                        PAN
+                        <Field name="pan" className="cst-input" maxLength={10} placeholder="ABCDE1234F" />
+                        {touched.pan && errors.pan && (
+                          <p className="cst-error">{String(errors.pan)}</p>
+                        )}
+                      </label>
+                      <label className="span-2">
+                        Notes
+                        <Field
+                          as="textarea"
+                          name="notes"
+                          rows={3}
+                          className="cst-input"
+                          placeholder="Preferences, delivery notes, etc."
+                        />
+                        {touched.notes && errors.notes && (
+                          <p className="cst-error">{String(errors.notes)}</p>
                         )}
                       </label>
                       <label className="cst-check">

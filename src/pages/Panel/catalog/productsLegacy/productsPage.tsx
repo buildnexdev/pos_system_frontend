@@ -315,9 +315,9 @@ function updateVariantList(
 
 export default function ProductsPage() {
   const { user, rights } = useSelector((s: RootState) => s.auth);
-  const canCreate = hasRight(rights, user, 'product', 'create');
-  const canEdit = hasRight(rights, user, 'product', 'edit');
-  const canDelete = hasRight(rights, user, 'product', 'delete');
+  const canCreate = hasRight(rights, user, 'catalog', 'create');
+  const canEdit = hasRight(rights, user, 'catalog', 'edit');
+  const canDelete = hasRight(rights, user, 'catalog', 'delete');
 
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);

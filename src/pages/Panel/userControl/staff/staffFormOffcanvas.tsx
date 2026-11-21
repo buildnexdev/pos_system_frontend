@@ -26,9 +26,17 @@ import {
   ToggleLeft,
   ToggleRight,
   Clock3,
+  Eye,
+  EyeOff,
+  Mail,
+  Upload,
+  ExternalLink,
+  FileImage,
 } from 'lucide-react';
 import { staffServices } from '../../../../redux/staff/staff.services';
 import { Loader } from '../../../../components/ui/Loader';
+import PincodeInput from '../../../../components/ui/PincodeInput';
+import IfscInput from '../../../../components/ui/IfscInput';
 import {
   phoneField,
   aadhaarField,
@@ -61,6 +69,14 @@ function mediaUrl(url?: string | null) {
   if (/^https?:\/\//i.test(url) || url.startsWith('blob:')) return url;
   if (url.startsWith('/')) return `${API_ORIGIN}${url}`;
   return url;
+}
+
+function isImageUrl(url?: string) {
+  return /\.(png|jpe?g|webp|gif|bmp|svg)(\?|$)/i.test(String(url || ''));
+}
+
+function isPdfUrl(url?: string) {
+  return /\.pdf(\?|$)/i.test(String(url || ''));
 }
 
 function historyMeta(action?: string) {
@@ -189,6 +205,7 @@ function emptyForm() {
     account_number: '',
     ifsc_code: '',
     bank_branch: '',
+    bank_address: '',
     department: '',
     designation: '',
     join_date: '',
@@ -201,13 +218,17 @@ function emptyForm() {
   };
 }
 
-function buildPayload(values: ReturnType<typeof emptyForm>) {
+function buildPayload(
+  values: ReturnType<typeof emptyForm>,
+  opts: { section?: TabKey | 'all' } = {},
+) {
   const name = [values.first_name, values.initial_name, values.last_name]
     .map((p) => (p || '').trim())
     .filter(Boolean)
     .join(' ');
 
-  return {
+  const section = opts.section || 'all';
+  const payload: Record<string, unknown> = {
     name,
     email: values.email,
     phone: values.phone,
@@ -221,9 +242,6 @@ function buildPayload(values: ReturnType<typeof emptyForm>) {
     city: values.city,
     state: values.state,
     pincode: values.pincode,
-    education: (values.education || []).filter((r) => r.degree && r.institution),
-    experience: (values.experience || []).filter((r) => r.company && r.designation),
-    documents: (values.documents || []).filter((r) => r.doc_type && r.doc_name && r.file_url),
     profile: {
       employee_code: values.employee_code || null,
       initial_name: values.initial_name || null,
@@ -243,6 +261,7 @@ function buildPayload(values: ReturnType<typeof emptyForm>) {
       account_number: values.account_number || null,
       ifsc_code: values.ifsc_code || null,
       bank_branch: values.bank_branch || null,
+      bank_address: values.bank_address || null,
       department: values.department || null,
       designation: values.designation || null,
       join_date: values.join_date || null,
@@ -253,6 +272,19 @@ function buildPayload(values: ReturnType<typeof emptyForm>) {
       country: values.country || 'India',
     },
   };
+
+  // Only send tab sections being saved so empty tabs don't wipe existing rows
+  if (section === 'all' || section === 'education') {
+    payload.education = (values.education || []).filter((r) => r.degree && r.institution);
+  }
+  if (section === 'all' || section === 'experience') {
+    payload.experience = (values.experience || []).filter((r) => r.company && r.designation);
+  }
+  if (section === 'all' || section === 'documents') {
+    payload.documents = (values.documents || []).filter((r) => r.doc_type && r.doc_name && r.file_url);
+  }
+
+  return payload;
 }
 
 export default function StaffFormOffcanvas({
@@ -275,6 +307,9 @@ export default function StaffFormOffcanvas({
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [visible, setVisible] = useState(false);
   const [createdId, setCreatedId] = useState<number | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [uploadingDocIndex, setUploadingDocIndex] = useState<number | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [initial, setInitial] = useState(emptyForm());
 
@@ -306,7 +341,13 @@ export default function StaffFormOffcanvas({
       staffServices.http.get('/panel/branches').catch(() => ({ data: { items: [] } })),
       staffServices.http.get('/panel/warehouses').catch(() => ({ data: { warehouses: [] } })),
     ]).then(([rolesRes, branchRes, whRes]) => {
-      setRoleOptions(rolesRes.data.roles || []);
+      // Hide Owner / Super Admin (L1) and Admin / Manager (L2)
+      setRoleOptions(
+        (rolesRes.data.roles || []).filter((r: any) => {
+          const level = Number(r.level);
+          return Number.isFinite(level) && level >= 3 && level < 90;
+        })
+      );
       setBranchOptions((branchRes.data.items || []).filter((b: any) => Number(b.is_active) !== 0));
       setWarehouseOptions(whRes.data.warehouses || []);
     });
@@ -318,6 +359,8 @@ export default function StaffFormOffcanvas({
     setAvatarPreview(null);
     setHistory([]);
     setMapped(false);
+    setShowPassword(false);
+    setShowConfirmPassword(false);
     setCreatedId(null);
 
     if (!isEdit) {
@@ -373,15 +416,38 @@ export default function StaffFormOffcanvas({
           account_number: p.account_number || '',
           ifsc_code: p.ifsc_code || '',
           bank_branch: p.bank_branch || '',
+          bank_address: p.bank_address || '',
           department: p.department || '',
           designation: p.designation || '',
           join_date: p.join_date ? String(p.join_date).slice(0, 10) : '',
           employment_type: p.employment_type || '',
           work_location: p.work_location || '',
           reporting_to: p.reporting_to || '',
-          education: res.data.education?.length ? res.data.education : [{ ...emptyEdu }],
-          experience: res.data.experience?.length ? res.data.experience : [{ ...emptyExp }],
-          documents: res.data.documents?.length ? res.data.documents : [{ ...emptyDoc }],
+          education: res.data.education?.length
+            ? res.data.education.map((r: any) => ({
+                degree: r.degree || '',
+                institution: r.institution || '',
+                year_from: r.year_from || '',
+                year_to: r.year_to || '',
+                grade: r.grade || '',
+              }))
+            : [{ ...emptyEdu }],
+          experience: res.data.experience?.length
+            ? res.data.experience.map((r: any) => ({
+                company: r.company || '',
+                designation: r.designation || '',
+                year_from: r.year_from || '',
+                year_to: r.year_to || '',
+                description: r.description || '',
+              }))
+            : [{ ...emptyExp }],
+          documents: res.data.documents?.length
+            ? res.data.documents.map((r: any) => ({
+                doc_type: r.doc_type || '',
+                doc_name: r.doc_name || '',
+                file_url: r.file_url || '',
+              }))
+            : [{ ...emptyDoc }],
         });
         if (p.photo_url) setAvatarPreview(p.photo_url);
         setHistory(res.data.history || []);
@@ -415,6 +481,42 @@ export default function StaffFormOffcanvas({
       onClose();
     } catch (e: any) {
       toast.error(e.response?.data?.message || 'Delete failed');
+    }
+  };
+
+  const uploadStaffDocument = async (
+    file: File,
+    index: number,
+    setFieldValue: (field: string, value: any) => void,
+    values: ReturnType<typeof emptyForm>,
+  ) => {
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('File must be under 10MB');
+      return;
+    }
+    setUploadingDocIndex(index);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const { data } = await staffServices.http.post('/panel/upload/staff-document', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        skipLoading: true,
+      } as any);
+      const url = data?.data?.url || data?.url;
+      if (!url) throw new Error('Upload failed');
+      setFieldValue(`documents.${index}.file_url`, url);
+      const currentName = values?.documents?.[index]?.doc_name;
+      if (!currentName) {
+        setFieldValue(
+          `documents.${index}.doc_name`,
+          file.name.replace(/\.[^.]+$/, '') || file.name,
+        );
+      }
+      toast.success('Document uploaded');
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || e.message || 'Upload failed');
+    } finally {
+      setUploadingDocIndex(null);
     }
   };
 
@@ -462,27 +564,54 @@ export default function StaffFormOffcanvas({
 
   const saveStaff = async (
     values: ReturnType<typeof emptyForm>,
-    opts: { stayOpen?: boolean; goNextAfter?: boolean } = {},
+    opts: { stayOpen?: boolean; goNextAfter?: boolean; section?: TabKey | 'all' } = {},
   ) => {
-    if (!isEdit && !createdId && !values.password) {
-      toast.error('Password is required');
-      setTab('office');
+    if (!values.first_name?.trim() || !values.last_name?.trim()) {
+      toast.error('First name and last name are required');
+      setTab('basic');
       return false;
     }
+    if (!values.email?.trim()) {
+      toast.error('Email is required');
+      setTab('basic');
+      return false;
+    }
+
+    const section = opts.section || (opts.goNextAfter || !opts.stayOpen ? 'all' : tab);
+    const needsAccountCreate = !isEdit && !createdId && !effectiveId;
+    const passwordGate =
+      needsAccountCreate &&
+      (section === 'office' || section === 'all' || tab === 'office' || !opts.stayOpen);
+
+    // Password lives on Office — don't yank early tabs to Office on Save & next
+    if (needsAccountCreate && !values.password) {
+      if (passwordGate) {
+        toast.error('Password is required');
+        setTab('office');
+        return false;
+      }
+      if (opts.goNextAfter) {
+        goNext();
+        return true;
+      }
+      toast.success(`${activeMeta.label} kept — set password in Office details to create account`);
+      return true;
+    }
+
     if (values.password && values.password !== values.confirm_password) {
       toast.error('Passwords do not match');
       setTab('office');
       return false;
     }
 
-    const payload = buildPayload(values);
+    const payload = buildPayload(values, { section });
     try {
       if (effectiveId) {
         await staffServices.http.put(`/panel/staff/${effectiveId}`, payload);
         toast.success(`${activeMeta.label} saved`);
       } else {
         const res = await staffServices.http.post('/panel/staff', payload);
-        const newId = res.data?.id;
+        const newId = res.data?.id ?? res.data?.data?.id;
         if (newId) {
           setCreatedId(Number(newId));
           setInitial((prev) => ({
@@ -848,21 +977,11 @@ export default function StaffFormOffcanvas({
                               <Field name="landmark" className="staff-form-input" />
                             </div>
                             <div>
-                              <label>City</label>
-                              <Field name="city" className="staff-form-input" />
-                            </div>
-                            <div>
-                              <label>State</label>
-                              <Field name="state" className="staff-form-input" />
-                            </div>
-                            <div>
                               <label>Pincode</label>
-                              <Field
-                                name="pincode"
+                              <PincodeInput
                                 className="staff-form-input"
-                                inputMode="numeric"
-                                maxLength={6}
-                                placeholder="6-digit pincode"
+                                value={values.pincode}
+                                setFieldValue={setFieldValue}
                               />
                               {touched.pincode && errors.pincode && (
                                 <p className="staff-form-error">{String(errors.pincode)}</p>
@@ -870,7 +989,33 @@ export default function StaffFormOffcanvas({
                             </div>
                             <div>
                               <label>Country</label>
-                              <Field name="country" className="staff-form-input" />
+                              <Field
+                                name="country"
+                                className="staff-form-input is-readonly"
+                                readOnly
+                                tabIndex={-1}
+                                placeholder="Auto from pincode"
+                              />
+                            </div>
+                            <div>
+                              <label>City</label>
+                              <Field
+                                name="city"
+                                className="staff-form-input is-readonly"
+                                readOnly
+                                tabIndex={-1}
+                                placeholder="Auto from pincode"
+                              />
+                            </div>
+                            <div>
+                              <label>State</label>
+                              <Field
+                                name="state"
+                                className="staff-form-input is-readonly"
+                                readOnly
+                                tabIndex={-1}
+                                placeholder="Auto from pincode"
+                              />
                             </div>
                           </div>
                         </div>
@@ -949,8 +1094,36 @@ export default function StaffFormOffcanvas({
                           <div className="staff-form-section-title">Bank details</div>
                           <div className="staff-form-grid">
                             <div>
+                              <label>IFSC</label>
+                              <IfscInput
+                                name="ifsc_code"
+                                className="staff-form-input"
+                                value={values.ifsc_code}
+                                setFieldValue={setFieldValue}
+                              />
+                              {touched.ifsc_code && errors.ifsc_code && (
+                                <p className="staff-form-error">{String(errors.ifsc_code)}</p>
+                              )}
+                            </div>
+                            <div>
                               <label>Bank name</label>
-                              <Field name="bank_name" className="staff-form-input" />
+                              <Field
+                                name="bank_name"
+                                className="staff-form-input is-readonly"
+                                readOnly
+                                tabIndex={-1}
+                                placeholder="Auto from IFSC"
+                              />
+                            </div>
+                            <div>
+                              <label>Branch name</label>
+                              <Field
+                                name="bank_branch"
+                                className="staff-form-input is-readonly"
+                                readOnly
+                                tabIndex={-1}
+                                placeholder="Auto from IFSC"
+                              />
                             </div>
                             <div>
                               <label>Account holder</label>
@@ -969,21 +1142,15 @@ export default function StaffFormOffcanvas({
                                 <p className="staff-form-error">{String(errors.account_number)}</p>
                               )}
                             </div>
-                            <div>
-                              <label>IFSC</label>
-                              <Field
-                                name="ifsc_code"
-                                className="staff-form-input"
-                                maxLength={11}
-                                placeholder="SBIN0001234"
-                              />
-                              {touched.ifsc_code && errors.ifsc_code && (
-                                <p className="staff-form-error">{String(errors.ifsc_code)}</p>
-                              )}
-                            </div>
                             <div className="span-2">
-                              <label>Branch</label>
-                              <Field name="bank_branch" className="staff-form-input" />
+                              <label>Branch address</label>
+                              <Field
+                                name="bank_address"
+                                className="staff-form-input is-readonly"
+                                readOnly
+                                tabIndex={-1}
+                                placeholder="Auto from IFSC"
+                              />
                             </div>
                           </div>
                         </div>
@@ -1069,34 +1236,83 @@ export default function StaffFormOffcanvas({
                           </div>
 
                           <div className="staff-form-section-title" style={{ marginTop: '1.1rem' }}>
-                            {isEdit || createdId ? 'Change password' : 'Login password'}
+                            {isEdit || createdId ? 'Login credentials' : 'Login account'}
                           </div>
                           <div className="staff-form-grid">
+                            <div className="span-2">
+                              <label>
+                                <Mail size={14} className="staff-lbl-icon" /> Email (login ID){' '}
+                                <span className="req">*</span>
+                              </label>
+                              <Field
+                                name="email"
+                                type="email"
+                                className="staff-form-input"
+                                placeholder="staff@company.com"
+                                autoComplete="username"
+                              />
+                              {touched.email && errors.email && (
+                                <p className="staff-form-error">{String(errors.email)}</p>
+                              )}
+                              <p className="staff-form-hint" style={{ marginTop: '0.35rem' }}>
+                                Same email as Basic details — must be unique for login.
+                              </p>
+                            </div>
                             <div>
                               <label>
                                 {isEdit || createdId ? 'New password' : 'Password'}{' '}
-                                {!isEdit && !createdId ? <span className="req">*</span> : <span className="staff-form-hint">(optional)</span>}
+                                {!isEdit && !createdId ? (
+                                  <span className="req">*</span>
+                                ) : (
+                                  <span className="staff-form-hint">(optional)</span>
+                                )}
                               </label>
-                              <Field
-                                name="password"
-                                type="password"
-                                className="staff-form-input"
-                                placeholder={isEdit || createdId ? 'Leave blank to keep current' : 'Min 6 characters'}
-                                autoComplete="new-password"
-                              />
+                              <div className="staff-password-wrap">
+                                <Field
+                                  name="password"
+                                  type={showPassword ? 'text' : 'password'}
+                                  className="staff-form-input"
+                                  placeholder={
+                                    isEdit || createdId ? 'Leave blank to keep current' : 'Min 6 characters'
+                                  }
+                                  autoComplete="new-password"
+                                />
+                                <button
+                                  type="button"
+                                  className="staff-password-toggle"
+                                  onClick={() => setShowPassword((v) => !v)}
+                                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                  tabIndex={-1}
+                                >
+                                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
+                              </div>
                               {touched.password && errors.password && (
                                 <p className="staff-form-error">{String(errors.password)}</p>
                               )}
                             </div>
                             <div>
                               <label>Confirm password</label>
-                              <Field
-                                name="confirm_password"
-                                type="password"
-                                className="staff-form-input"
-                                placeholder="Re-enter password"
-                                autoComplete="new-password"
-                              />
+                              <div className="staff-password-wrap">
+                                <Field
+                                  name="confirm_password"
+                                  type={showConfirmPassword ? 'text' : 'password'}
+                                  className="staff-form-input"
+                                  placeholder="Re-enter password"
+                                  autoComplete="new-password"
+                                />
+                                <button
+                                  type="button"
+                                  className="staff-password-toggle"
+                                  onClick={() => setShowConfirmPassword((v) => !v)}
+                                  aria-label={
+                                    showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'
+                                  }
+                                  tabIndex={-1}
+                                >
+                                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
+                              </div>
                               {touched.confirm_password && errors.confirm_password && (
                                 <p className="staff-form-error">{String(errors.confirm_password)}</p>
                               )}
@@ -1109,25 +1325,110 @@ export default function StaffFormOffcanvas({
                         <FieldArray name="documents">
                           {({ push, remove }) => (
                             <div className="staff-form-stack">
-                              <p className="staff-form-hint">Paste document URL for now (ID proof, resume, etc.).</p>
-                              {values.documents.map((_: any, index: number) => (
-                                <div key={index} className="staff-form-card">
-                                  <div className="staff-form-section-title">
-                                    Document #{index + 1}
-                                    {values.documents.length > 1 && (
-                                      <button type="button" className="staff-form-remove" onClick={() => remove(index)}>
-                                        <Trash2 size={14} /> Remove
-                                      </button>
-                                    )}
+                              <p className="staff-form-hint">
+                                Upload ID proof, resume, etc. (PDF / image / office, max 10MB) or paste a URL.
+                              </p>
+                              {values.documents.map((doc: any, index: number) => {
+                                const fileUrl = doc?.file_url || '';
+                                const preview = mediaUrl(fileUrl);
+                                const uploading = uploadingDocIndex === index;
+                                return (
+                                  <div key={index} className="staff-form-card">
+                                    <div className="staff-form-section-title">
+                                      Document #{index + 1}
+                                      {values.documents.length > 1 && (
+                                        <button
+                                          type="button"
+                                          className="staff-form-remove"
+                                          onClick={() => remove(index)}
+                                        >
+                                          <Trash2 size={14} /> Remove
+                                        </button>
+                                      )}
+                                    </div>
+                                    <div className="staff-form-grid">
+                                      <div>
+                                        <label>Doc type</label>
+                                        <Field
+                                          name={`documents.${index}.doc_type`}
+                                          className="staff-form-input"
+                                          placeholder="Aadhaar / Resume / PAN"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label>Document name</label>
+                                        <Field
+                                          name={`documents.${index}.doc_name`}
+                                          className="staff-form-input"
+                                          placeholder="Document name"
+                                        />
+                                      </div>
+                                      <div className="span-2">
+                                        <label>File</label>
+                                        <div className="staff-doc-file-row">
+                                          <Field
+                                            name={`documents.${index}.file_url`}
+                                            className="staff-form-input"
+                                            placeholder="Upload or paste URL"
+                                          />
+                                          <label
+                                            className={`staff-doc-upload-btn ${uploading ? 'is-busy' : ''}`}
+                                          >
+                                            <Upload size={15} />
+                                            {uploading ? 'Uploading…' : 'Upload'}
+                                            <input
+                                              type="file"
+                                              accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.doc,.docx,.xls,.xlsx,image/*,application/pdf"
+                                              disabled={uploading}
+                                              onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                e.target.value = '';
+                                                if (file) {
+                                                  uploadStaffDocument(file, index, setFieldValue, values);
+                                                }
+                                              }}
+                                            />
+                                          </label>
+                                        </div>
+                                      </div>
+                                      {fileUrl ? (
+                                        <div className="span-2 staff-doc-preview">
+                                          {isImageUrl(fileUrl) ? (
+                                            <a
+                                              href={preview}
+                                              target="_blank"
+                                              rel="noreferrer"
+                                              className="staff-doc-preview-img"
+                                            >
+                                              <img src={preview} alt={doc.doc_name || 'Document'} />
+                                            </a>
+                                          ) : (
+                                            <a
+                                              href={preview}
+                                              target="_blank"
+                                              rel="noreferrer"
+                                              className="staff-doc-preview-link"
+                                            >
+                                              {isPdfUrl(fileUrl) ? (
+                                                <FileText size={16} />
+                                              ) : (
+                                                <FileImage size={16} />
+                                              )}
+                                              <span>{doc.doc_name || 'Open document'}</span>
+                                              <ExternalLink size={14} />
+                                            </a>
+                                          )}
+                                        </div>
+                                      ) : null}
+                                    </div>
                                   </div>
-                                  <div className="staff-form-grid">
-                                    <Field name={`documents.${index}.doc_type`} className="staff-form-input" placeholder="Doc type (Aadhaar/Resume)" />
-                                    <Field name={`documents.${index}.doc_name`} className="staff-form-input" placeholder="Document name" />
-                                    <Field name={`documents.${index}.file_url`} className="staff-form-input span-2" placeholder="File URL" />
-                                  </div>
-                                </div>
-                              ))}
-                              <button type="button" className="staff-form-add-row" onClick={() => push({ ...emptyDoc })}>
+                                );
+                              })}
+                              <button
+                                type="button"
+                                className="staff-form-add-row"
+                                onClick={() => push({ ...emptyDoc })}
+                              >
                                 <Plus size={15} /> Add document
                               </button>
                             </div>
@@ -1206,7 +1507,7 @@ export default function StaffFormOffcanvas({
                             className="staff-form-btn soft"
                             disabled={isSubmitting}
                             onClick={async () => {
-                              await saveStaff(values, { stayOpen: true });
+                              await saveStaff(values, { stayOpen: true, section: tab });
                             }}
                           >
                             <Save size={15} />
@@ -1218,7 +1519,11 @@ export default function StaffFormOffcanvas({
                               className="staff-form-btn primary"
                               disabled={isSubmitting}
                               onClick={async () => {
-                                await saveStaff(values, { stayOpen: true, goNextAfter: true });
+                                await saveStaff(values, {
+                                  stayOpen: true,
+                                  goNextAfter: true,
+                                  section: tab,
+                                });
                               }}
                             >
                               Save & next <ChevronRight size={16} />
@@ -1229,7 +1534,7 @@ export default function StaffFormOffcanvas({
                               className="staff-form-btn primary"
                               disabled={isSubmitting}
                               onClick={async () => {
-                                await saveStaff(values, { stayOpen: false });
+                                await saveStaff(values, { stayOpen: false, section: 'all' });
                               }}
                             >
                               <Save size={15} /> Finish

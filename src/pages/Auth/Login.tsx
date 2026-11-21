@@ -7,7 +7,7 @@
 
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -18,6 +18,12 @@ import { RootState } from '../../redux/store';
 import { COMPANY_LOGO, COMPANY_NAME, COMPANY_TAGLINE } from '../../utils/brand';
 import { isPanelUser, isSuperAdminUser } from '../../utils/access';
 import './Login.scss';
+
+function safePanelPath(path?: string | null) {
+  if (!path || typeof path !== 'string') return null;
+  if (!path.startsWith('/panel')) return null;
+  return path;
+}
 
 type PanelMode = 'login' | 'forgot' | 'register';
 
@@ -92,12 +98,14 @@ function PasswordField({
 export default function Login() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, loading, error, user } = useSelector((s: RootState) => s.auth);
   const [mode, setMode] = useState<PanelMode>('login');
   const [forgotStep, setForgotStep] = useState<'request' | 'reset'>('request');
   const [forgotLogin, setForgotLogin] = useState('');
   const [maskedEmail, setMaskedEmail] = useState('');
   const [busy, setBusy] = useState(false);
+  const returnTo = safePanelPath((location.state as { from?: string } | null)?.from);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -107,15 +115,21 @@ export default function Login() {
         return;
       }
       toast.success('Login successful');
+      if (returnTo && isPanelUser(user) && !isSuperAdminUser(user)) {
+        navigate(returnTo, { replace: true });
+        return;
+      }
       if (isSuperAdminUser(user)) {
-        navigate('/panel/companies', { replace: true });
+        navigate(returnTo?.startsWith('/panel/companies') ? returnTo : '/panel/companies', {
+          replace: true,
+        });
       } else if (isPanelUser(user)) {
         navigate('/panel', { replace: true });
       } else {
         navigate('/login', { replace: true });
       }
     }
-  }, [isAuthenticated, navigate, user]);
+  }, [isAuthenticated, navigate, user, returnTo]);
 
   useEffect(() => {
     try {
@@ -170,7 +184,6 @@ export default function Login() {
 
         <header className="bnx-login-hero">
           <img src={COMPANY_LOGO} alt={COMPANY_NAME} className="bnx-login-logo" />
-          <p className="bnx-login-brand">{COMPANY_NAME}</p>
           <h1 className="bnx-login-title">
             One counter.
             <span>Every shop.</span>

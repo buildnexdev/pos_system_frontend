@@ -61,6 +61,64 @@
   text-decoration: none;
 }
 
+.stk-summary {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 0.4rem;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.stk-sum-chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.05rem;
+  border: 1px solid #fed7aa;
+  background: #fff;
+  border-radius: 12px;
+  padding: 0.3rem 0.65rem;
+  cursor: pointer;
+  min-width: 4.25rem;
+  line-height: 1.15;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.stk-sum-chip:hover {
+  transform: translateY(-1px);
+  border-color: #fdba74;
+  background: #fff7ed;
+}
+
+.stk-sum-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #9a3412;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.stk-sum-chip strong {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.stk-sum-chip.is-low strong {
+  color: #b45309;
+}
+
+.stk-sum-chip.is-out strong {
+  color: #b91c1c;
+}
+
+.stk-sum-chip.is-damaged strong {
+  color: #7c2d12;
+}
+
 .stk-toolbar-end {
   display: inline-flex;
   align-items: center;
@@ -202,6 +260,21 @@
   background: #b45309;
   color: #fff;
   border-color: #b45309;
+}
+
+.stk-reports button em {
+  font-style: normal;
+  font-weight: 800;
+  margin-left: 0.15rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(180, 83, 9, 0.12);
+  color: inherit;
+  font-size: 0.72rem;
+}
+
+.stk-reports button.is-on em {
+  background: rgba(255, 255, 255, 0.22);
 }
 
 .stk-report-box {
@@ -648,8 +721,15 @@
     flex: 1 1 auto;
   }
 
-  .stk-search {
+  .stk-summary {
     order: 3;
+    flex: 1 1 100%;
+    overflow-x: auto;
+    padding-bottom: 0.1rem;
+  }
+
+  .stk-search {
+    order: 4;
     flex: 1 1 100%;
     max-width: none;
   }

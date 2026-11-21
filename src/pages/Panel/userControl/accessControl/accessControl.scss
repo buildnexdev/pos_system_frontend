@@ -161,11 +161,21 @@
   white-space: nowrap;
 }
 
+.access-th-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
 .access-th {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
   font-weight: 700;
+}
+
+.access-check-header {
+  flex-shrink: 0;
 }
 
 .access-table td {
@@ -231,6 +241,30 @@
   border: solid #fff;
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
+}
+
+.access-check.is-disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.access-hint {
+  margin: 0 0 0.85rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  background: #f0f9ff;
+  color: #0369a1;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.access-view-only {
+  display: block;
+  margin-top: 0.15rem;
+  font-style: normal;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #64748b;
 }
 
 @keyframes accessFade {

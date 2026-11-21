@@ -51,6 +51,8 @@ import {
   accountNumberField,
 } from '../../../../utils/fieldValidators';
 import { Loader } from '../../../../components/ui/Loader';
+import PincodeInput from '../../../../components/ui/PincodeInput';
+import IfscInput from '../../../../components/ui/IfscInput';
 import './companies.scss';
 
 const API_ORIGIN = String((import.meta as any).env?.VITE_API_URL || '')
@@ -102,6 +104,7 @@ const schema = Yup.object({
   account_number: accountNumberField(false),
   ifsc_code: ifscField(false),
   bank_branch: str(),
+  bank_address: str(),
   notes: str(),
   is_active: Yup.boolean(),
   documents: Yup.array().of(
@@ -154,6 +157,7 @@ const emptyCompany = {
   account_number: '',
   ifsc_code: '',
   bank_branch: '',
+  bank_address: '',
   notes: '',
   is_active: true,
   documents: [{ ...emptyDoc }],
@@ -196,6 +200,7 @@ function toFormValues(item?: any | null) {
     account_number: item.account_number || '',
     ifsc_code: item.ifsc_code || '',
     bank_branch: item.bank_branch || '',
+    bank_address: item.bank_address || '',
     notes: item.notes || '',
     is_active: !!item.is_active,
     documents: docs,
@@ -599,6 +604,7 @@ export default function CompaniesPage() {
                       account_number: values.account_number || null,
                       ifsc_code: values.ifsc_code || null,
                       bank_branch: values.bank_branch || null,
+                      bank_address: values.bank_address || null,
                       documents: (values.documents || [])
                         .filter((d: any) => d.doc_type || d.doc_name || d.file_url)
                         .map((d: any) => ({
@@ -690,21 +696,43 @@ export default function CompaniesPage() {
                           <Field name="address" className="spr-input" placeholder="Street / area" />
                         </div>
                         <div>
-                          <label>City</label>
-                          <Field name="city" className="spr-input" placeholder="City" />
-                        </div>
-                        <div>
-                          <label>State</label>
-                          <Field name="state" className="spr-input" placeholder="State" />
-                        </div>
-                        <div>
                           <label>Pincode</label>
-                          <Field name="pincode" className="spr-input" inputMode="numeric" maxLength={6} placeholder="6-digit pincode" />
+                          <PincodeInput
+                            className="spr-input"
+                            value={values.pincode}
+                            setFieldValue={setFieldValue}
+                          />
                           {touched.pincode && errors.pincode && <p className="spr-error">{String(errors.pincode)}</p>}
                         </div>
                         <div>
                           <label>Country</label>
-                          <Field name="country" className="spr-input" placeholder="Country" />
+                          <Field
+                            name="country"
+                            className="spr-input is-readonly"
+                            readOnly
+                            tabIndex={-1}
+                            placeholder="Auto from pincode"
+                          />
+                        </div>
+                        <div>
+                          <label>City</label>
+                          <Field
+                            name="city"
+                            className="spr-input is-readonly"
+                            readOnly
+                            tabIndex={-1}
+                            placeholder="Auto from pincode"
+                          />
+                        </div>
+                        <div>
+                          <label>State</label>
+                          <Field
+                            name="state"
+                            className="spr-input is-readonly"
+                            readOnly
+                            tabIndex={-1}
+                            placeholder="Auto from pincode"
+                          />
                         </div>
                       </div>
                     </section>
@@ -769,8 +797,36 @@ export default function CompaniesPage() {
                       <h3><Landmark size={15} /> Bank Details</h3>
                       <div className="spr-form-grid">
                         <div>
+                          <label><Hash size={14} className="lbl-icon c-violet" /> IFSC Code</label>
+                          <IfscInput
+                            name="ifsc_code"
+                            className="spr-input"
+                            value={values.ifsc_code}
+                            setFieldValue={setFieldValue}
+                          />
+                          {touched.ifsc_code && errors.ifsc_code && (
+                            <p className="spr-error">{String(errors.ifsc_code)}</p>
+                          )}
+                        </div>
+                        <div>
                           <label><Landmark size={14} className="lbl-icon c-teal" /> Bank Name</label>
-                          <Field name="bank_name" className="spr-input" placeholder="Bank name" />
+                          <Field
+                            name="bank_name"
+                            className="spr-input is-readonly"
+                            readOnly
+                            tabIndex={-1}
+                            placeholder="Auto from IFSC"
+                          />
+                        </div>
+                        <div>
+                          <label><Building2 size={14} className="lbl-icon c-blue" /> Branch Name</label>
+                          <Field
+                            name="bank_branch"
+                            className="spr-input is-readonly"
+                            readOnly
+                            tabIndex={-1}
+                            placeholder="Auto from IFSC"
+                          />
                         </div>
                         <div>
                           <label><UserRound size={14} className="lbl-icon c-orange" /> Account Holder</label>
@@ -783,16 +839,15 @@ export default function CompaniesPage() {
                             <p className="spr-error">{String(errors.account_number)}</p>
                           )}
                         </div>
-                        <div>
-                          <label><Hash size={14} className="lbl-icon c-violet" /> IFSC Code</label>
-                          <Field name="ifsc_code" className="spr-input" maxLength={11} placeholder="SBIN0001234" />
-                          {touched.ifsc_code && errors.ifsc_code && (
-                            <p className="spr-error">{String(errors.ifsc_code)}</p>
-                          )}
-                        </div>
                         <div className="span-2">
-                          <label><Building2 size={14} className="lbl-icon c-blue" /> Bank Branch</label>
-                          <Field name="bank_branch" className="spr-input" placeholder="Branch name / location" />
+                          <label><MapPin size={14} className="lbl-icon c-rose" /> Branch Address</label>
+                          <Field
+                            name="bank_address"
+                            className="spr-input is-readonly"
+                            readOnly
+                            tabIndex={-1}
+                            placeholder="Auto from IFSC"
+                          />
                         </div>
                       </div>
                     </section>

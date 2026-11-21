@@ -40,6 +40,8 @@ import {
   accountNumberField,
 } from '../../../../utils/fieldValidators';
 import { Loader } from '../../../../components/ui/Loader';
+import PincodeInput from '../../../../components/ui/PincodeInput';
+import IfscInput from '../../../../components/ui/IfscInput';
 import './suppliers.scss';
 
 const schema = Yup.object({
@@ -63,6 +65,8 @@ const schema = Yup.object({
   bank_account_name: Yup.string(),
   bank_account_no: accountNumberField(false),
   bank_ifsc: ifscField(false),
+  bank_branch: Yup.string(),
+  bank_address: Yup.string(),
   website: Yup.string(),
   contact_person: Yup.string(),
   notes: Yup.string(),
@@ -90,6 +94,8 @@ const emptySupplier = {
   bank_account_name: '',
   bank_account_no: '',
   bank_ifsc: '',
+  bank_branch: '',
+  bank_address: '',
   website: '',
   contact_person: '',
   notes: '',
@@ -506,21 +512,11 @@ export default function SuppliersPage() {
                           <Field name="address" className="spr-input" placeholder="Street / area" />
                         </div>
                         <div>
-                          <label>City</label>
-                          <Field name="city" className="spr-input" placeholder="City" />
-                        </div>
-                        <div>
-                          <label>State</label>
-                          <Field name="state" className="spr-input" placeholder="State" />
-                        </div>
-                        <div>
                           <label>Pincode</label>
-                          <Field
-                            name="pincode"
+                          <PincodeInput
                             className="spr-input"
-                            inputMode="numeric"
-                            maxLength={6}
-                            placeholder="6-digit pincode"
+                            value={values.pincode}
+                            setFieldValue={setFieldValue}
                           />
                           {(touched.pincode || submitCount > 0) && errors.pincode && (
                             <p className="spr-error">{String(errors.pincode)}</p>
@@ -528,7 +524,33 @@ export default function SuppliersPage() {
                         </div>
                         <div>
                           <label>Country</label>
-                          <Field name="country" className="spr-input" placeholder="Country" />
+                          <Field
+                            name="country"
+                            className="spr-input is-readonly"
+                            readOnly
+                            tabIndex={-1}
+                            placeholder="Auto from pincode"
+                          />
+                        </div>
+                        <div>
+                          <label>City</label>
+                          <Field
+                            name="city"
+                            className="spr-input is-readonly"
+                            readOnly
+                            tabIndex={-1}
+                            placeholder="Auto from pincode"
+                          />
+                        </div>
+                        <div>
+                          <label>State</label>
+                          <Field
+                            name="state"
+                            className="spr-input is-readonly"
+                            readOnly
+                            tabIndex={-1}
+                            placeholder="Auto from pincode"
+                          />
                         </div>
                       </div>
                     </section>
@@ -569,8 +591,39 @@ export default function SuppliersPage() {
                       <h3><Landmark size={15} /> Bank Details</h3>
                       <div className="spr-form-grid">
                         <div>
+                          <label>IFSC</label>
+                          <IfscInput
+                            name="bank_ifsc"
+                            className="spr-input"
+                            value={values.bank_ifsc}
+                            setFieldValue={setFieldValue}
+                            bankNameField="bank_name"
+                            branchField="bank_branch"
+                            addressField="bank_address"
+                          />
+                          {(touched.bank_ifsc || submitCount > 0) && errors.bank_ifsc && (
+                            <p className="spr-error">{String(errors.bank_ifsc)}</p>
+                          )}
+                        </div>
+                        <div>
                           <label>Bank Name</label>
-                          <Field name="bank_name" className="spr-input" placeholder="Bank name" />
+                          <Field
+                            name="bank_name"
+                            className="spr-input is-readonly"
+                            readOnly
+                            tabIndex={-1}
+                            placeholder="Auto from IFSC"
+                          />
+                        </div>
+                        <div>
+                          <label>Branch Name</label>
+                          <Field
+                            name="bank_branch"
+                            className="spr-input is-readonly"
+                            readOnly
+                            tabIndex={-1}
+                            placeholder="Auto from IFSC"
+                          />
                         </div>
                         <div>
                           <label>Account Name</label>
@@ -589,12 +642,15 @@ export default function SuppliersPage() {
                             <p className="spr-error">{String(errors.bank_account_no)}</p>
                           )}
                         </div>
-                        <div>
-                          <label>IFSC</label>
-                          <Field name="bank_ifsc" className="spr-input" maxLength={11} placeholder="SBIN0001234" />
-                          {(touched.bank_ifsc || submitCount > 0) && errors.bank_ifsc && (
-                            <p className="spr-error">{String(errors.bank_ifsc)}</p>
-                          )}
+                        <div className="span-2">
+                          <label>Branch Address</label>
+                          <Field
+                            name="bank_address"
+                            className="spr-input is-readonly"
+                            readOnly
+                            tabIndex={-1}
+                            placeholder="Auto from IFSC"
+                          />
                         </div>
                       </div>
                     </section>

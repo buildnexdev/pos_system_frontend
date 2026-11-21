@@ -90,9 +90,11 @@
 
 .bnx-login-logo {
   display: block;
-  width: min(168px, 52%);
+  width: min(300px, 90%);
   height: auto;
   margin-bottom: 1.1rem;
+  border-radius: 0;
+  background: transparent;
   filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.35));
 }
 

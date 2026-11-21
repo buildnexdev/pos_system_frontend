@@ -30,9 +30,37 @@ import './staff.scss';
 
 const AVATAR_COLORS = ['#0f766e', '#b45309', '#1d4ed8', '#be123c', '#7c3aed', '#047857'];
 
+const API_ORIGIN = String((import.meta as any).env?.VITE_API_URL || '')
+  .replace(/\/api\/?$/i, '')
+  .replace(/\/$/, '');
+
 function avatarColor(name: string) {
   const code = Array.from(name || 'A').reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
   return AVATAR_COLORS[code % AVATAR_COLORS.length];
+}
+
+function mediaUrl(url?: string | null) {
+  if (!url) return '';
+  if (/^https?:\/\//i.test(url) || url.startsWith('blob:')) return url;
+  if (url.startsWith('/')) return `${API_ORIGIN}${url}`;
+  return url;
+}
+
+function StaffAvatar({ name, photoUrl, large }: { name?: string; photoUrl?: string | null; large?: boolean }) {
+  const src = mediaUrl(photoUrl);
+  const initial = (name || 'S').slice(0, 1).toUpperCase();
+  if (src) {
+    return (
+      <span className={`staff-avatar has-photo ${large ? 'lg' : ''}`}>
+        <img src={src} alt={name || 'Staff'} />
+      </span>
+    );
+  }
+  return (
+    <span className={`staff-avatar ${large ? 'lg' : ''}`} style={{ background: avatarColor(name || '') }}>
+      {initial}
+    </span>
+  );
 }
 
 export default function StaffPage() {
@@ -215,9 +243,7 @@ export default function StaffPage() {
                       <td>{(pagination.page - 1) * pagination.limit + index + 1}</td>
                       <td>
                         <div className="staff-name-cell">
-                          <span className="staff-avatar" style={{ background: avatarColor(row.name) }}>
-                            {(row.name || 'S').slice(0, 1).toUpperCase()}
-                          </span>
+                          <StaffAvatar name={row.name} photoUrl={row.photo_url} />
                           <strong>{row.name}</strong>
                         </div>
                       </td>
@@ -297,9 +323,7 @@ export default function StaffPage() {
               staff.map((row, index) => (
                 <article key={row.id} className="staff-card" style={{ animationDelay: `${index * 50}ms` }}>
                   <div className="staff-card-top">
-                    <span className="staff-avatar lg" style={{ background: avatarColor(row.name) }}>
-                      {(row.name || 'S').slice(0, 1).toUpperCase()}
-                    </span>
+                    <StaffAvatar name={row.name} photoUrl={row.photo_url} large />
                     <span className={`staff-badge ${row.is_active ? 'is-on' : 'is-off'}`}>
                       {row.is_active ? 'Active' : 'Inactive'}
                     </span>

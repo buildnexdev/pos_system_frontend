@@ -84,8 +84,6 @@ const COLOR_OPTIONS = [
   'Black', 'White', 'Red', 'Blue', 'Navy', 'Green', 'Yellow', 'Pink', 'Grey', 'Beige', 'Brown', 'Maroon', 'Olive', 'Purple',
 ];
 const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '28', '30', '32', '34', '36', '38', '40', '42', '44', '46', 'One Size'];
-const FABRIC_OPTIONS = ['Cotton', 'Linen', 'Polyester', 'Silk', 'Wool', 'Denim', 'Rayon', 'Blend'];
-const MATERIAL_OPTIONS = ['100% Cotton', 'Cotton Blend', 'Polyester', 'Silk Blend', 'Linen Blend'];
 const PATTERN_OPTIONS = ['Solid', 'Striped', 'Checked', 'Printed', 'Embroidered', 'Floral'];
 const FIT_OPTIONS = ['Regular', 'Slim', 'Relaxed', 'Oversized', 'Tailored'];
 const SLEEVE_OPTIONS = ['Full Sleeve', 'Half Sleeve', 'Short Sleeve', 'Sleeveless', '3/4 Sleeve'];
@@ -262,9 +260,17 @@ function showGarmentAttrs(categoryName?: string) {
 
 export default function CatalogProductsPage() {
   const { user, rights } = useSelector((s: RootState) => s.auth);
-  const canCreate = hasRight(rights, user, 'product', 'create');
-  const canEdit = hasRight(rights, user, 'product', 'edit');
-  const canDelete = hasRight(rights, user, 'product', 'delete');
+  const canCreate = hasRight(rights, user, 'catalog', 'create');
+  const canEdit = hasRight(rights, user, 'catalog', 'edit');
+  const canDelete = hasRight(rights, user, 'catalog', 'delete');
+  const canAddCategory =
+    hasRight(rights, user, 'category', 'create') || hasRight(rights, user, 'catalog', 'create');
+  const canAddBrand =
+    hasRight(rights, user, 'brand', 'create') || hasRight(rights, user, 'catalog', 'create');
+  const canAddProductType =
+    hasRight(rights, user, 'product_type', 'create') || hasRight(rights, user, 'catalog', 'create');
+  const canAddMaterialType =
+    hasRight(rights, user, 'material_type', 'create') || hasRight(rights, user, 'catalog', 'create');
   const priceTagBrand = useMemo(
     () => ({
       name: user?.companyName || undefined,
@@ -276,6 +282,8 @@ export default function CatalogProductsPage() {
 
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [brandOptions, setBrandOptions] = useState<any[]>([]);
+  const [materialTypeOptions, setMaterialTypeOptions] = useState<any[]>([]);
   const [types, setTypes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'table' | 'grid'>('table');
@@ -295,6 +303,22 @@ export default function CatalogProductsPage() {
   const [draftCode, setDraftCode] = useState(() => generateProductCode());
   const [gallery, setGallery] = useState<string[]>([]);
   const [formInstanceKey, setFormInstanceKey] = useState(0);
+  const [categoryQuickOpen, setCategoryQuickOpen] = useState(false);
+  const [categoryQuickName, setCategoryQuickName] = useState('');
+  const [categoryQuickSaving, setCategoryQuickSaving] = useState(false);
+  const categorySelectSetter = useRef<((field: string, value: any) => void) | null>(null);
+  const [brandQuickOpen, setBrandQuickOpen] = useState(false);
+  const [brandQuickName, setBrandQuickName] = useState('');
+  const [brandQuickSaving, setBrandQuickSaving] = useState(false);
+  const brandSelectSetter = useRef<((field: string, value: any) => void) | null>(null);
+  const [typeQuickOpen, setTypeQuickOpen] = useState(false);
+  const [typeQuickName, setTypeQuickName] = useState('');
+  const [typeQuickSaving, setTypeQuickSaving] = useState(false);
+  const typeSelectSetter = useRef<((field: string, value: any) => void) | null>(null);
+  const [materialTypeQuickOpen, setMaterialTypeQuickOpen] = useState(false);
+  const [materialTypeQuickName, setMaterialTypeQuickName] = useState('');
+  const [materialTypeQuickSaving, setMaterialTypeQuickSaving] = useState(false);
+  const materialTypeSelectSetter = useRef<((field: string, value: any) => void) | null>(null);
   const [seedVariants, setSeedVariants] = useState<CatalogVariant[]>(() => {
     const code = generateProductCode();
     return [
@@ -313,23 +337,25 @@ export default function CatalogProductsPage() {
   const variantFileRef = useRef<HTMLInputElement>(null);
 
   const brands = useMemo(() => {
-    const set = new Set<string>();
-    products.forEach((p) => {
-      if (p.brand) set.add(String(p.brand));
-    });
-    return Array.from(set).sort();
-  }, [products]);
+    const fromMaster = brandOptions.map((b) => String(b.name || '')).filter(Boolean);
+    const fromProducts = products.map((p) => String(p.brand || '')).filter(Boolean);
+    return Array.from(new Set([...fromMaster, ...fromProducts])).sort();
+  }, [brandOptions, products]);
 
   const load = async () => {
     setLoading(true);
     try {
-      const [p, c, t] = await Promise.all([
+      const [p, c, b, mt, t] = await Promise.all([
         catalogServices.http.get('/panel/products'),
         catalogServices.http.get('/panel/categories'),
+        catalogServices.http.get('/panel/brands'),
+        catalogServices.http.get('/panel/material-types'),
         catalogServices.http.get('/panel/product-types'),
       ]);
       setProducts(p.data.products || []);
       setCategories(c.data.categories || []);
+      setBrandOptions(b.data.brands || []);
+      setMaterialTypeOptions(mt.data.materialTypes || []);
       setTypes(t.data.items || []);
     } catch (e: any) {
       toast.error(e.response?.data?.message || 'Failed to load products');
@@ -341,6 +367,135 @@ export default function CatalogProductsPage() {
   useEffect(() => {
     load();
   }, []);
+
+  const openQuickCategory = (setFieldValue: (field: string, value: any) => void) => {
+    categorySelectSetter.current = setFieldValue;
+    setCategoryQuickName('');
+    setCategoryQuickOpen(true);
+  };
+
+  const saveQuickCategory = async () => {
+    const name = categoryQuickName.trim();
+    if (!name) {
+      toast.error('Category name is required');
+      return;
+    }
+    setCategoryQuickSaving(true);
+    try {
+      const { data } = await catalogServices.http.post('/panel/categories', { name });
+      const newId = data?.id ?? data?.data?.id;
+      const { data: list } = await catalogServices.http.get('/panel/categories');
+      setCategories(list.categories || []);
+      if (newId && categorySelectSetter.current) {
+        categorySelectSetter.current('category_id', String(newId));
+      }
+      toast.success('Category added');
+      setCategoryQuickOpen(false);
+      setCategoryQuickName('');
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || 'Could not add category');
+    } finally {
+      setCategoryQuickSaving(false);
+    }
+  };
+
+  const openQuickBrand = (setFieldValue: (field: string, value: any) => void) => {
+    brandSelectSetter.current = setFieldValue;
+    setBrandQuickName('');
+    setBrandQuickOpen(true);
+  };
+
+  const saveQuickBrand = async () => {
+    const name = brandQuickName.trim();
+    if (!name) {
+      toast.error('Brand name is required');
+      return;
+    }
+    setBrandQuickSaving(true);
+    try {
+      const { data } = await catalogServices.http.post('/panel/brands', { name });
+      const newName = data?.name ?? data?.data?.name ?? name;
+      const { data: list } = await catalogServices.http.get('/panel/brands');
+      setBrandOptions(list.brands || []);
+      if (brandSelectSetter.current) {
+        brandSelectSetter.current('brand', String(newName));
+      }
+      toast.success('Brand added');
+      setBrandQuickOpen(false);
+      setBrandQuickName('');
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || 'Could not add brand');
+    } finally {
+      setBrandQuickSaving(false);
+    }
+  };
+
+  const openQuickProductType = (setFieldValue: (field: string, value: any) => void) => {
+    typeSelectSetter.current = setFieldValue;
+    setTypeQuickName('');
+    setTypeQuickOpen(true);
+  };
+
+  const saveQuickProductType = async () => {
+    const name = typeQuickName.trim();
+    if (!name) {
+      toast.error('Product type name is required');
+      return;
+    }
+    setTypeQuickSaving(true);
+    try {
+      const { data } = await catalogServices.http.post('/panel/product-types', { name });
+      const newId = data?.id ?? data?.data?.id;
+      const { data: list } = await catalogServices.http.get('/panel/product-types');
+      setTypes(list.items || []);
+      if (newId && typeSelectSetter.current) {
+        typeSelectSetter.current('product_type_id', String(newId));
+      }
+      toast.success('Product type added');
+      setTypeQuickOpen(false);
+      setTypeQuickName('');
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || 'Could not add product type');
+    } finally {
+      setTypeQuickSaving(false);
+    }
+  };
+
+  const materialTypeNames = useMemo(() => {
+    const fromMaster = materialTypeOptions.map((m) => String(m.name || '')).filter(Boolean);
+    return Array.from(new Set(fromMaster)).sort();
+  }, [materialTypeOptions]);
+
+  const openQuickMaterialType = (setFieldValue: (field: string, value: any) => void) => {
+    materialTypeSelectSetter.current = setFieldValue;
+    setMaterialTypeQuickName('');
+    setMaterialTypeQuickOpen(true);
+  };
+
+  const saveQuickMaterialType = async () => {
+    const name = materialTypeQuickName.trim();
+    if (!name) {
+      toast.error('Material type name is required');
+      return;
+    }
+    setMaterialTypeQuickSaving(true);
+    try {
+      const { data } = await catalogServices.http.post('/panel/material-types', { name });
+      const newName = data?.name ?? data?.data?.name ?? name;
+      const { data: list } = await catalogServices.http.get('/panel/material-types');
+      setMaterialTypeOptions(list.materialTypes || []);
+      if (materialTypeSelectSetter.current) {
+        materialTypeSelectSetter.current('fabric', String(newName));
+      }
+      toast.success('Material type added');
+      setMaterialTypeQuickOpen(false);
+      setMaterialTypeQuickName('');
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || 'Could not add material type');
+    } finally {
+      setMaterialTypeQuickSaving(false);
+    }
+  };
 
   useEffect(() => {
     if (formOpen) {
@@ -1183,19 +1338,83 @@ export default function CatalogProductsPage() {
                               </div>
                               <div>
                                 <label><Tags size={14} /> Product Type *</label>
-                                <Field as="select" name="product_type_id" className="cat-input">
-                                  <option value="">Select type</option>
-                                  {types.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-                                </Field>
-                                {touched.product_type_id && errors.product_type_id && <p className="cat-error">{String(errors.product_type_id)}</p>}
+                                <div className="cat-category-row">
+                                  <Field
+                                    as="select"
+                                    name="product_type_id"
+                                    className="cat-input"
+                                    onChange={(e: ChangeEvent<HTMLSelectElement>) => {
+                                      const val = e.target.value;
+                                      if (val === '__add_product_type__') {
+                                        e.target.value = String(values.product_type_id || '');
+                                        openQuickProductType(setFieldValue);
+                                        return;
+                                      }
+                                      setFieldValue('product_type_id', val);
+                                    }}
+                                  >
+                                    <option value="">Select type</option>
+                                    {types.map((t) => (
+                                      <option key={t.id} value={t.id}>{t.name}</option>
+                                    ))}
+                                    {canAddProductType ? (
+                                      <option value="__add_product_type__">+ Add product type…</option>
+                                    ) : null}
+                                  </Field>
+                                  {canAddProductType ? (
+                                    <button
+                                      type="button"
+                                      className="cat-category-add"
+                                      title="Add product type"
+                                      onClick={() => openQuickProductType(setFieldValue)}
+                                    >
+                                      <Plus size={15} />
+                                    </button>
+                                  ) : null}
+                                </div>
+                                {touched.product_type_id && errors.product_type_id && (
+                                  <p className="cat-error">{String(errors.product_type_id)}</p>
+                                )}
                               </div>
                               <div>
                                 <label><FolderTree size={14} /> Category *</label>
-                                <Field as="select" name="category_id" className="cat-input">
-                                  <option value="">Select category</option>
-                                  {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                </Field>
-                                {touched.category_id && errors.category_id && <p className="cat-error">{String(errors.category_id)}</p>}
+                                <div className="cat-category-row">
+                                  <Field
+                                    as="select"
+                                    name="category_id"
+                                    className="cat-input"
+                                    onChange={(e: ChangeEvent<HTMLSelectElement>) => {
+                                      const val = e.target.value;
+                                      if (val === '__add_category__') {
+                                        e.target.value = String(values.category_id || '');
+                                        openQuickCategory(setFieldValue);
+                                        return;
+                                      }
+                                      setFieldValue('category_id', val);
+                                    }}
+                                  >
+                                    <option value="">Select category</option>
+                                    {categories.map((c) => (
+                                      <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                    {canAddCategory ? (
+                                      <option value="__add_category__">+ Add category…</option>
+                                    ) : null}
+                                  </Field>
+                                  {canAddCategory ? (
+                                    <button
+                                      type="button"
+                                      className="cat-category-add"
+                                      title="Add category"
+                                      onClick={() => openQuickCategory(setFieldValue)}
+                                    >
+                                      <Plus size={15} />
+                                    </button>
+                                  ) : null}
+                                </div>
+                                {touched.category_id && errors.category_id && (
+                                  <p className="cat-error">{String(errors.category_id)}</p>
+                                )}
                               </div>
                               <div>
                                 <label><Layers size={14} /> Subcategory</label>
@@ -1203,7 +1422,43 @@ export default function CatalogProductsPage() {
                               </div>
                               <div>
                                 <label><Tag size={14} /> Brand</label>
-                                <Field name="brand" className="cat-input" placeholder="Brand name" />
+                                <div className="cat-category-row">
+                                  <Field
+                                    as="select"
+                                    name="brand"
+                                    className="cat-input"
+                                    onChange={(e: ChangeEvent<HTMLSelectElement>) => {
+                                      const val = e.target.value;
+                                      if (val === '__add_brand__') {
+                                        e.target.value = String(values.brand || '');
+                                        openQuickBrand(setFieldValue);
+                                        return;
+                                      }
+                                      setFieldValue('brand', val);
+                                    }}
+                                  >
+                                    <option value="">Select brand</option>
+                                    {brands.map((b) => (
+                                      <option key={b} value={b}>{b}</option>
+                                    ))}
+                                    {values.brand && !brands.includes(String(values.brand)) ? (
+                                      <option value={values.brand}>{values.brand}</option>
+                                    ) : null}
+                                    {canAddBrand ? (
+                                      <option value="__add_brand__">+ Add brand…</option>
+                                    ) : null}
+                                  </Field>
+                                  {canAddBrand ? (
+                                    <button
+                                      type="button"
+                                      className="cat-category-add"
+                                      title="Add brand"
+                                      onClick={() => openQuickBrand(setFieldValue)}
+                                    >
+                                      <Plus size={15} />
+                                    </button>
+                                  ) : null}
+                                </div>
                               </div>
                               <div>
                                 <label><Users size={14} /> Gender *</label>
@@ -1230,18 +1485,52 @@ export default function CatalogProductsPage() {
                             </div>
                             <div className="cat-form-grid">
                               <div>
-                                <label>Fabric Type</label>
-                                <Field as="select" name="fabric" className="cat-input">
-                                  <option value="">Select</option>
-                                  {FABRIC_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
-                                </Field>
+                                <label>Material Type</label>
+                                <div className="cat-category-row">
+                                  <Field
+                                    as="select"
+                                    name="fabric"
+                                    className="cat-input"
+                                    onChange={(e: ChangeEvent<HTMLSelectElement>) => {
+                                      const val = e.target.value;
+                                      if (val === '__add_material_type__') {
+                                        e.target.value = String(values.fabric || '');
+                                        openQuickMaterialType(setFieldValue);
+                                        return;
+                                      }
+                                      setFieldValue('fabric', val);
+                                    }}
+                                  >
+                                    <option value="">Select</option>
+                                    {materialTypeNames.map((o) => (
+                                      <option key={o} value={o}>{o}</option>
+                                    ))}
+                                    {values.fabric && !materialTypeNames.includes(String(values.fabric)) ? (
+                                      <option value={values.fabric}>{values.fabric}</option>
+                                    ) : null}
+                                    {canAddMaterialType ? (
+                                      <option value="__add_material_type__">+ Add material type…</option>
+                                    ) : null}
+                                  </Field>
+                                  {canAddMaterialType ? (
+                                    <button
+                                      type="button"
+                                      className="cat-category-add"
+                                      title="Add material type"
+                                      onClick={() => openQuickMaterialType(setFieldValue)}
+                                    >
+                                      <Plus size={15} />
+                                    </button>
+                                  ) : null}
+                                </div>
                               </div>
                               <div>
-                                <label>Material</label>
-                                <Field as="select" name="material" className="cat-input">
-                                  <option value="">Select</option>
-                                  {MATERIAL_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
-                                </Field>
+                                <label>Material Desc</label>
+                                <Field
+                                  name="material"
+                                  className="cat-input"
+                                  placeholder="e.g. 100% Cotton, soft finish"
+                                />
                               </div>
                               {garmentAttrs && (
                                 <>
@@ -1752,6 +2041,185 @@ export default function CatalogProductsPage() {
             </aside>
           </div>,
           document.body
+        )}
+
+      {categoryQuickOpen &&
+        createPortal(
+          <div className="cat-quick-overlay">
+            <div className="cat-quick-backdrop" onClick={() => !categoryQuickSaving && setCategoryQuickOpen(false)} />
+            <div className="cat-quick-modal" role="dialog" aria-modal="true" aria-label="Add category">
+              <h3><FolderTree size={16} /> Add Category</h3>
+              <p>Creates a category for this product dropdown.</p>
+              <label>Category name *</label>
+              <input
+                className="cat-input"
+                value={categoryQuickName}
+                onChange={(e) => setCategoryQuickName(e.target.value)}
+                placeholder="e.g. Accessories"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    saveQuickCategory();
+                  }
+                }}
+              />
+              <div className="cat-quick-actions">
+                <button
+                  type="button"
+                  className="cat-btn ghost"
+                  disabled={categoryQuickSaving}
+                  onClick={() => setCategoryQuickOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="cat-btn primary"
+                  disabled={categoryQuickSaving}
+                  onClick={saveQuickCategory}
+                >
+                  {categoryQuickSaving ? 'Saving…' : <><Plus size={15} /> Add</>}
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+
+      {brandQuickOpen &&
+        createPortal(
+          <div className="cat-quick-overlay">
+            <div className="cat-quick-backdrop" onClick={() => !brandQuickSaving && setBrandQuickOpen(false)} />
+            <div className="cat-quick-modal" role="dialog" aria-modal="true" aria-label="Add brand">
+              <h3><Tag size={16} /> Add Brand</h3>
+              <p>Creates a brand for this product dropdown.</p>
+              <label>Brand name *</label>
+              <input
+                className="cat-input"
+                value={brandQuickName}
+                onChange={(e) => setBrandQuickName(e.target.value)}
+                placeholder="e.g. BuildNex ShopOS"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    saveQuickBrand();
+                  }
+                }}
+              />
+              <div className="cat-quick-actions">
+                <button
+                  type="button"
+                  className="cat-btn ghost"
+                  disabled={brandQuickSaving}
+                  onClick={() => setBrandQuickOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="cat-btn primary"
+                  disabled={brandQuickSaving}
+                  onClick={saveQuickBrand}
+                >
+                  {brandQuickSaving ? 'Saving…' : <><Plus size={15} /> Add</>}
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+
+      {typeQuickOpen &&
+        createPortal(
+          <div className="cat-quick-overlay">
+            <div className="cat-quick-backdrop" onClick={() => !typeQuickSaving && setTypeQuickOpen(false)} />
+            <div className="cat-quick-modal" role="dialog" aria-modal="true" aria-label="Add product type">
+              <h3><Tags size={16} /> Add Product Type</h3>
+              <p>Creates a product type for this product dropdown.</p>
+              <label>Product type name *</label>
+              <input
+                className="cat-input"
+                value={typeQuickName}
+                onChange={(e) => setTypeQuickName(e.target.value)}
+                placeholder="e.g. Accessories"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    saveQuickProductType();
+                  }
+                }}
+              />
+              <div className="cat-quick-actions">
+                <button
+                  type="button"
+                  className="cat-btn ghost"
+                  disabled={typeQuickSaving}
+                  onClick={() => setTypeQuickOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="cat-btn primary"
+                  disabled={typeQuickSaving}
+                  onClick={saveQuickProductType}
+                >
+                  {typeQuickSaving ? 'Saving…' : <><Plus size={15} /> Add</>}
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+
+      {materialTypeQuickOpen &&
+        createPortal(
+          <div className="cat-quick-overlay">
+            <div
+              className="cat-quick-backdrop"
+              onClick={() => !materialTypeQuickSaving && setMaterialTypeQuickOpen(false)}
+            />
+            <div className="cat-quick-modal" role="dialog" aria-modal="true" aria-label="Add material type">
+              <h3><Shirt size={16} /> Add Material Type</h3>
+              <p>Creates a material type for this product dropdown.</p>
+              <label>Material type name *</label>
+              <input
+                className="cat-input"
+                value={materialTypeQuickName}
+                onChange={(e) => setMaterialTypeQuickName(e.target.value)}
+                placeholder="e.g. Cotton"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    saveQuickMaterialType();
+                  }
+                }}
+              />
+              <div className="cat-quick-actions">
+                <button
+                  type="button"
+                  className="cat-btn ghost"
+                  disabled={materialTypeQuickSaving}
+                  onClick={() => setMaterialTypeQuickOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="cat-btn primary"
+                  disabled={materialTypeQuickSaving}
+                  onClick={saveQuickMaterialType}
+                >
+                  {materialTypeQuickSaving ? 'Saving…' : <><Plus size={15} /> Add</>}
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
         )}
     </div>
   );

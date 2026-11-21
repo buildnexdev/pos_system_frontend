@@ -20,10 +20,16 @@ import {
   Share2,
   Maximize2,
   Minimize2,
+  Download,
 } from 'lucide-react';
 import { billingServices } from '../../../../redux/billing/billing.services';
 import { RootState } from '../../../../redux/store';
 import { hasRight } from '../../../../utils/access';
+import {
+  buildReceiptHtml,
+  downloadReceiptHtml,
+  printReceiptHtml,
+} from '../../../../utils/invoiceReceipt';
 import './billing.scss';
 
 type CartLine = {
@@ -57,12 +63,14 @@ type HeldBill = {
 
 type InvoiceRow = {
   id: number;
+  billingID?: number;
   invoice_no: string;
   customer_name: string;
   total: number;
   status: string;
   created_at?: string;
   order_id?: number;
+  orderID?: number;
 };
 
 const emptyCustomer = {
@@ -126,84 +134,89 @@ function stockToCart(row: any): CartLine {
   };
 }
 
-function printInvoice(payload: {
+function receiptFromSale(payload: {
   invoice: any;
   orderNumber: string;
   customer: typeof emptyCustomer;
-  items: CartLine[];
+  items: Array<{
+    product_name: string;
+    color?: string;
+    size?: string;
+    sku?: string;
+    barcode?: string;
+    quantity: number;
+    price: number;
+    item_discount?: number;
+  }>;
   totals: any;
   payments: any[];
-  thermal?: boolean;
+  company?: { name?: string | null; location?: string | null };
+  taxPercent?: number;
+  autoPrint?: boolean;
 }) {
-  const { invoice, orderNumber, customer, items, totals, payments, thermal } = payload;
-  const rows = items
-    .map(
-      (i) => `
-      <tr>
-        <td>${i.product_name}<br/><small>${i.color || '—'} / ${i.size || '—'} · ${i.sku || i.barcode || ''}</small></td>
-        <td>${i.quantity}</td>
-        <td>${money(i.price)}</td>
-        <td>${money(i.item_discount)}</td>
-        <td>${money(i.price * i.quantity - i.item_discount)}</td>
-      </tr>`
-    )
-    .join('');
-  const pays = (payments || [])
-    .map((p) => `<div>${String(p.method).toUpperCase()}: ${money(p.amount)}${p.reference_no ? ` · ${p.reference_no}` : ''}</div>`)
-    .join('');
+  const mode =
+    (payload.payments || [])
+      .map((p) => String(p.method || '').toUpperCase())
+      .filter(Boolean)
+      .join(' + ') || 'CASH';
+  const taxPct = Number(payload.taxPercent);
+  const billAddress = [
+    payload.customer?.address,
+    payload.customer?.city,
+    payload.customer?.state,
+    payload.customer?.pincode,
+  ]
+    .filter(Boolean)
+    .join(', ');
+  return buildReceiptHtml({
+    company: {
+      name: payload.company?.name || 'BuildNex ShopOS',
+      location: payload.company?.location || undefined,
+    },
+    invoiceNo: payload.invoice?.invoice_no,
+    orderNo: payload.orderNumber || 'NA',
+    date: payload.invoice?.created_at || new Date(),
+    dueDate: payload.invoice?.created_at || new Date(),
+    terms: 'Due on Receipt',
+    paymentMode: mode,
+    billToName: payload.customer?.name || 'Walk-in Customer',
+    billToPhone: payload.customer?.phone || '',
+    billToLocation: payload.customer?.city || 'Local',
+    billToAddress: billAddress,
+    shipToName: payload.customer?.name || 'Walk-in Customer',
+    shipToPhone: payload.customer?.phone || '',
+    shipToLocation: payload.customer?.city || 'Local',
+    shipToAddress: billAddress,
+    items: (payload.items || []).map((i) => ({
+      ...i,
+      tax_percent: Number.isFinite(taxPct) ? taxPct : 0,
+    })),
+    subtotal: payload.totals?.subtotal,
+    taxTotal: payload.totals?.tax_amount,
+    taxPercent: Number.isFinite(taxPct) ? taxPct : 0,
+    discount: Number(payload.totals?.discount || 0) + Number(payload.totals?.coupon_discount || 0),
+    charges: payload.totals?.additional_charges,
+    roundOff: payload.totals?.round_off,
+    grandTotal: payload.totals?.total,
+    amountReceived: payload.totals?.amount_received,
+    changeAmount: payload.totals?.change_amount,
+    payments: payload.payments,
+    autoPrint: payload.autoPrint,
+  });
+}
 
-  const html = `<!doctype html><html><head><title>${invoice?.invoice_no || orderNumber}</title>
-  <style>
-    body{font-family:Segoe UI,Arial,sans-serif;color:#0f172a;margin:24px;}
-    h1{margin:0 0 4px;font-size:20px;}
-    .muted{color:#64748b;font-size:12px;}
-    table{width:100%;border-collapse:collapse;margin-top:16px;font-size:13px;}
-    th,td{border-bottom:1px solid #e2e8f0;padding:8px 4px;text-align:left;vertical-align:top;}
-    .tot{margin-top:16px;width:280px;margin-left:auto;font-size:13px;}
-    .tot div{display:flex;justify-content:space-between;margin:4px 0;}
-    .grand{font-weight:800;font-size:16px;border-top:1px dashed #94a3b8;padding-top:8px;}
-    @media print{
-      ${thermal ? `
-        @page{size:80mm auto;margin:4mm;}
-        body{margin:0;width:72mm;font-size:11px;}
-        table{font-size:11px;}
-        .tot{width:100%;}
-      ` : ''}
-    }
-  </style></head><body>
-    <h1>Tax Invoice</h1>
-    <div class="muted">${invoice?.invoice_no || ''} · Order ${orderNumber}</div>
-    <div style="margin-top:12px">
-      <strong>Bill To</strong><br/>
-      ${customer.name || 'Walk-in'}<br/>
-      ${customer.phone || ''}<br/>
-      ${customer.address || ''}
-    </div>
-    <table>
-      <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Disc</th><th>Amount</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    <div class="tot">
-      <div><span>Subtotal</span><span>${money(totals.subtotal)}</span></div>
-      <div><span>Discount</span><span>${money((totals.discount || 0) + (totals.coupon_discount || 0))}</span></div>
-      <div><span>GST / Tax</span><span>${money(totals.tax_amount)}</span></div>
-      <div><span>Charges</span><span>${money(totals.additional_charges)}</span></div>
-      <div><span>Round off</span><span>${money(totals.round_off)}</span></div>
-      <div class="grand"><span>Grand Total</span><span>${money(totals.total)}</span></div>
-      <div><span>Received</span><span>${money(totals.amount_received)}</span></div>
-      <div><span>Change</span><span>${money(totals.change_amount)}</span></div>
-    </div>
-    <div style="margin-top:16px"><strong>Payments</strong>${pays || '<div>—</div>'}</div>
-    <script>window.onload=()=>{window.print();}</script>
-  </body></html>`;
+function printInvoice(payload: Parameters<typeof receiptFromSale>[0]) {
+  const html = receiptFromSale({ ...payload, autoPrint: true });
+  if (!printReceiptHtml(html)) toast.error('Allow popups to print invoice');
+}
 
-  const w = window.open('', '_blank', 'width=800,height=900');
-  if (!w) {
-    toast.error('Allow popups to print invoice');
-    return;
-  }
-  w.document.write(html);
-  w.document.close();
+function downloadInvoice(payload: Parameters<typeof receiptFromSale>[0]) {
+  const html = receiptFromSale({ ...payload, autoPrint: false });
+  const name = String(payload.invoice?.invoice_no || payload.orderNumber || 'invoice').replace(
+    /[^\w.-]+/g,
+    '_'
+  );
+  downloadReceiptHtml(html, name);
 }
 
 export default function BillingPage() {
@@ -239,7 +252,9 @@ export default function BillingPage() {
   const [holdsOpen, setHoldsOpen] = useState(false);
   const [holdsVisible, setHoldsVisible] = useState(false);
   const [invOpen, setInvOpen] = useState(false);
+  const [invoiceBusyId, setInvoiceBusyId] = useState<number | null>(null);
   const [invVisible, setInvVisible] = useState(false);
+  const [invQuery, setInvQuery] = useState('');
   const [holds, setHolds] = useState<HeldBill[]>(() => loadHolds());
   const [invoices, setInvoices] = useState<InvoiceRow[]>([]);
   const [lastSale, setLastSale] = useState<any>(null);
@@ -330,14 +345,86 @@ export default function BillingPage() {
     };
   }, [cart, billDiscount, couponDiscount, taxPercent, additionalCharges, roundOff, amountReceived]);
 
-  const loadInvoices = useCallback(async () => {
+  const loadInvoices = useCallback(async (q = '') => {
     try {
-      const { data } = await billingServices.http.get('/panel/billings');
+      const { data } = await billingServices.http.get('/panel/billings', {
+        params: q.trim() ? { q: q.trim() } : undefined,
+      });
       setInvoices(data.items || []);
     } catch {
       setInvoices([]);
     }
   }, []);
+
+  const invoiceKey = (inv: InvoiceRow) =>
+    Number(inv.billingID || inv.id || 0) || String(inv.invoice_no || '');
+
+  const exportInvoice = async (inv: InvoiceRow, mode: 'download' | 'print') => {
+    const billingId = Number(inv.billingID || inv.id || 0);
+    const lookup = billingId || inv.invoice_no;
+    if (!lookup) {
+      toast.error('Invoice id missing');
+      return;
+    }
+    setInvoiceBusyId(billingId || -1);
+    try {
+      const data = await billingServices.getOne(lookup);
+      const invoice = data.invoice || inv;
+      const order = data.order || {};
+      const items = (data.items || []).map((row: any) => ({
+        product_name: row.product_name || 'Item',
+        color: row.color || '',
+        size: row.size || '',
+        sku: row.sku || row.stock_code || '',
+        barcode: row.barcode || '',
+        quantity: Number(row.quantity || 0),
+        price: Number(row.price || 0),
+        item_discount: Number(row.item_discount || 0),
+      }));
+      const payload = {
+        invoice,
+        orderNumber: order.order_number || String(order.orderID || order.id || ''),
+        customer: {
+          ...emptyCustomer,
+          name: order.shipping_name || invoice.customer_name || 'Walk-in Customer',
+          phone: order.shipping_phone || '',
+          address: order.shipping_address || '',
+          email: invoice.customer_email || '',
+          city: order.shipping_city || 'Local',
+          state: order.shipping_state || 'N/A',
+          pincode: order.shipping_pincode || '000000',
+        },
+        items,
+        totals: data.totals || {
+          subtotal: Number(invoice.amount || invoice.total || 0),
+          discount: 0,
+          coupon_discount: 0,
+          tax_amount: Number(invoice.tax || 0),
+          additional_charges: 0,
+          round_off: 0,
+          total: Number(invoice.total || 0),
+          amount_received: Number(invoice.total || 0),
+          change_amount: 0,
+        },
+        payments: data.payments || [],
+        company: {
+          name: user?.companyName || 'BuildNex ShopOS',
+          location: [user?.city, user?.state].filter(Boolean).join(', ') || undefined,
+        },
+        taxPercent: Number(taxPercent) || 0,
+      };
+      if (mode === 'download') {
+        downloadInvoice(payload);
+        toast.success('Invoice downloaded');
+      } else {
+        printInvoice(payload);
+      }
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || 'Could not load invoice');
+    } finally {
+      setInvoiceBusyId(null);
+    }
+  };
 
   useEffect(() => {
     loadInvoices();
@@ -680,6 +767,11 @@ export default function BillingPage() {
           items: cart,
           totals: data.totals || totals,
           payments: data.payments || payments,
+          company: {
+            name: user?.companyName || 'BuildNex ShopOS',
+            location: [user?.city, user?.state].filter(Boolean).join(', ') || undefined,
+          },
+          taxPercent: Number(taxPercent) || 0,
         });
       }
       clearSale();
@@ -719,7 +811,7 @@ export default function BillingPage() {
               <button type="button" className="pos-chip" onClick={() => { setHolds(loadHolds()); setHoldsOpen(true); }}>
                 <Pause size={14} /> Held ({holds.length})
               </button>
-              <button type="button" className="pos-chip" onClick={() => { loadInvoices(); setInvOpen(true); }}>
+              <button type="button" className="pos-chip" onClick={() => { setInvQuery(''); loadInvoices(''); setInvOpen(true); }}>
                 <Receipt size={14} /> Invoices
               </button>
               <button type="button" className="pos-chip" onClick={() => scanRef.current?.focus()}>
@@ -1098,18 +1190,60 @@ export default function BillingPage() {
                 <p>POS and billing invoices</p>
               </div>
               <div className="pos-oc-body">
+                <label className="pos-inv-search">
+                  <Search size={15} />
+                  <input
+                    value={invQuery}
+                    onChange={(e) => setInvQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        loadInvoices(invQuery);
+                      }
+                    }}
+                    placeholder="Search invoice no / customer"
+                  />
+                  <button
+                    type="button"
+                    className="pos-inv-btn"
+                    title="Search"
+                    onClick={() => loadInvoices(invQuery)}
+                  >
+                    <RefreshCw size={14} />
+                  </button>
+                </label>
                 {!invoices.length ? (
-                  <div className="pos-empty">No invoices yet</div>
+                  <div className="pos-empty">{invQuery.trim() ? 'No invoices match your search' : 'No invoices yet'}</div>
                 ) : (
                   invoices.slice(0, 40).map((inv) => (
-                    <div key={inv.id} className="pos-inv-row">
+                    <div key={String(invoiceKey(inv))} className="pos-inv-row">
                       <div>
                         <strong>{inv.invoice_no}</strong>
                         <div style={{ color: '#627d98', fontSize: '0.78rem' }}>
                           {inv.customer_name} · {inv.status}
                         </div>
                       </div>
-                      <strong>{money(inv.total)}</strong>
+                      <div className="pos-inv-actions">
+                        <strong>{money(inv.total)}</strong>
+                        <button
+                          type="button"
+                          className="pos-inv-btn"
+                          title="Download invoice"
+                          disabled={invoiceBusyId === Number(inv.billingID || inv.id)}
+                          onClick={() => exportInvoice(inv, 'download')}
+                        >
+                          <Download size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          className="pos-inv-btn"
+                          title="Print invoice"
+                          disabled={invoiceBusyId === Number(inv.billingID || inv.id)}
+                          onClick={() => exportInvoice(inv, 'print')}
+                        >
+                          <Printer size={14} />
+                        </button>
+                      </div>
                     </div>
                   ))
                 )}

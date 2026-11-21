@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 160" fill="none" role="img" aria-label="BuildNex ShopOS">
+  <defs>
+    <linearGradient id="bnxCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#67E8F9"/>
+      <stop offset="45%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#34D399"/>
+    </linearGradient>
+    <linearGradient id="bnxWord" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#67E8F9"/>
+      <stop offset="55%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#2DD4BF"/>
+    </linearGradient>
+    <linearGradient id="bnxTile" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0EA5E9"/>
+      <stop offset="100%" stop-color="#14B8A6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- motion streaks -->
+  <rect x="8" y="58" width="36" height="7" rx="3.5" fill="url(#bnxCyan)"/>
+  <rect x="18" y="72" width="28" height="6" rx="3" fill="url(#bnxCyan)" opacity="0.85"/>
+  <rect x="28" y="85" width="20" height="5" rx="2.5" fill="url(#bnxCyan)" opacity="0.7"/>
+
+  <!-- orbital swoosh -->
+  <path d="M48 118c28 24 78 18 98-18 16-28 4-58-18-70" stroke="url(#bnxCyan)" stroke-width="7" stroke-linecap="round" fill="none"/>
+
+  <!-- cart body -->
+  <path d="M70 48h92l-8 52H78L70 48Z" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M64 40h18l6 12" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- cart bars -->
+  <path d="M86 58v32M102 58v32M118 58v32M134 58v32" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
+  <!-- wheels -->
+  <circle cx="92" cy="112" r="8" fill="#FFFFFF"/>
+  <circle cx="138" cy="112" r="8" fill="#FFFFFF"/>
+
+  <!-- N tile in cart -->
+  <rect x="96" y="62" width="36" height="36" rx="8" fill="url(#bnxTile)"/>
+  <path d="M106 88V72h7l8 11V72h7v16h-7l-8-11v11h-7Z" fill="#FFFFFF"/>
+
+  <!-- divider -->
+  <rect x="188" y="34" width="3" height="92" rx="1.5" fill="url(#bnxCyan)"/>
+
+  <!-- wordmark -->
+  <text x="210" y="72" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="42" font-weight="800" letter-spacing="-1.2">
+    <tspan fill="#FFFFFF">Build</tspan><tspan fill="url(#bnxWord)">Nex</tspan>
+  </text>
+  <text x="210" y="116" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="42" font-weight="800" letter-spacing="-1.2">
+    <tspan fill="#FFFFFF">Shop</tspan><tspan fill="url(#bnxWord)">OS</tspan>
+  </text>
+  <text x="456" y="48" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF" opacity="0.9">TM</text>
+  <text x="210" y="142" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="14" font-weight="600" letter-spacing="1.6" fill="#D1FAE5">Smart POS. Smarter Business.</text>
+</svg>

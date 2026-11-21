@@ -40,6 +40,13 @@ export default function StockInventoryPage() {
   const canEdit = hasRight(rights, user, 'product', 'edit');
 
   const [items, setItems] = useState<any[]>([]);
+  const [summary, setSummary] = useState({
+    current: 0,
+    low: 0,
+    out: 0,
+    damaged: 0,
+    available_units: 0,
+  });
   const [categories, setCategories] = useState<any[]>([]);
   const [warehouses, setWarehouses] = useState<any[]>([]);
   const [suppliers, setSuppliers] = useState<any[]>([]);
@@ -112,6 +119,15 @@ export default function StockInventoryPage() {
       ]);
       const nextItems = stock.data.items || [];
       setItems(nextItems);
+      if (stock.data.summary) {
+        setSummary({
+          current: Number(stock.data.summary.current || 0),
+          low: Number(stock.data.summary.low || 0),
+          out: Number(stock.data.summary.out || 0),
+          damaged: Number(stock.data.summary.damaged || 0),
+          available_units: Number(stock.data.summary.available_units || 0),
+        });
+      }
       setCategories(cats.data.categories || []);
       setWarehouses((wh.data.warehouses || []).filter((w: any) => Number(w.is_active) !== 0));
       setSuppliers((sup.data.items || []).filter((s: any) => Number(s.is_active) === 1));
@@ -360,8 +376,28 @@ export default function StockInventoryPage() {
           <div className="stk-hero">
             <div className="stk-hero-icon"><Boxes size={22} /></div>
             <div>
-              <h1>Stock Management {items.length} SKUs</h1>
+              <h1>Stock Management</h1>
+              <p>{summary.current} SKUs · {summary.available_units} units available</p>
             </div>
+          </div>
+
+          <div className="stk-summary" aria-label="Stock totals">
+            <button type="button" className="stk-sum-chip is-current" onClick={() => loadReport('current')}>
+              <span className="stk-sum-label">Current</span>
+              <strong>{summary.current}</strong>
+            </button>
+            <button type="button" className="stk-sum-chip is-low" onClick={() => loadReport('low')}>
+              <span className="stk-sum-label"><AlertTriangle size={12} /> Low</span>
+              <strong>{summary.low}</strong>
+            </button>
+            <button type="button" className="stk-sum-chip is-out" onClick={() => loadReport('out')}>
+              <span className="stk-sum-label">Out</span>
+              <strong>{summary.out}</strong>
+            </button>
+            <button type="button" className="stk-sum-chip is-damaged" onClick={() => loadReport('damaged')}>
+              <span className="stk-sum-label">Damaged</span>
+              <strong>{summary.damaged}</strong>
+            </button>
           </div>
 
           <label className="stk-search">
@@ -400,10 +436,18 @@ export default function StockInventoryPage() {
         </div>
 
         <div className="stk-reports" role="tablist" aria-label="Stock reports">
-          <button type="button" className={reportType === 'current' ? 'is-on' : ''} onClick={() => loadReport('current')}>Current Stock</button>
-          <button type="button" className={reportType === 'low' ? 'is-on' : ''} onClick={() => loadReport('low')}><AlertTriangle size={13} /> Low Stock</button>
-          <button type="button" className={reportType === 'out' ? 'is-on' : ''} onClick={() => loadReport('out')}>Out of Stock</button>
-          <button type="button" className={reportType === 'damaged' ? 'is-on' : ''} onClick={() => loadReport('damaged')}>Damaged</button>
+          <button type="button" className={reportType === 'current' ? 'is-on' : ''} onClick={() => loadReport('current')}>
+            Current Stock <em>{summary.current}</em>
+          </button>
+          <button type="button" className={reportType === 'low' ? 'is-on' : ''} onClick={() => loadReport('low')}>
+            <AlertTriangle size={13} /> Low Stock <em>{summary.low}</em>
+          </button>
+          <button type="button" className={reportType === 'out' ? 'is-on' : ''} onClick={() => loadReport('out')}>
+            Out of Stock <em>{summary.out}</em>
+          </button>
+          <button type="button" className={reportType === 'damaged' ? 'is-on' : ''} onClick={() => loadReport('damaged')}>
+            Damaged <em>{summary.damaged}</em>
+          </button>
           <button type="button" className={reportType === 'movement' ? 'is-on' : ''} onClick={() => loadReport('movement')}>Movements</button>
           <button type="button" className={reportType === 'warehouse' ? 'is-on' : ''} onClick={() => loadReport('warehouse')}><Warehouse size={13} /> Warehouse</button>
         </div>

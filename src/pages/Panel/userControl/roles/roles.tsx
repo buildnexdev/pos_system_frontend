@@ -5,7 +5,6 @@ import toast from 'react-hot-toast';
 import { useSelector } from 'react-redux';
 import {
   Shield,
-  Crown,
   Store,
   Boxes,
   ShoppingCart,
@@ -28,9 +27,8 @@ import { hasRight } from '../../../../utils/access';
 import { Loader } from '../../../../components/ui/Loader';
 import './roles.scss';
 
+/** L1 Owner / L2 Admin are system-only — not shown in Roles UI */
 const FALLBACK_LEVELS = [
-  { level: 1, label: 'Level 1[Owner / Super Admin]', name: 'Owner / Super Admin', description: 'Complete business and system control', color: '#7c3aed' },
-  { level: 2, label: 'Level 2[Admin / Manager]', name: 'Admin / Manager', description: 'Overall store and employee management', color: '#2563eb' },
   { level: 3, label: 'Level 3[Store Manager]', name: 'Store Manager', description: 'Daily store operations and sales', color: '#0f766e' },
   { level: 4, label: 'Level 4[Inventory Manager]', name: 'Inventory Manager', description: 'Products, stock, sizes and variants', color: '#ea580c' },
   { level: 5, label: 'Level 5[Order Manager]', name: 'Order Manager', description: 'Orders, delivery, returns and exchanges', color: '#db2777' },
@@ -39,8 +37,6 @@ const FALLBACK_LEVELS = [
 ];
 
 const LEVEL_ICONS: Record<number, ReactNode> = {
-  1: <Crown size={18} />,
-  2: <Shield size={18} />,
   3: <Store size={18} />,
   4: <Boxes size={18} />,
   5: <ShoppingCart size={18} />,
@@ -48,12 +44,17 @@ const LEVEL_ICONS: Record<number, ReactNode> = {
   7: <Eye size={18} />,
 };
 
+function isAssignableRole(role: { level?: number | null }) {
+  const level = Number(role?.level);
+  return Number.isFinite(level) && level >= 3 && level < 90;
+}
+
 const AVATAR_COLORS = ['#16a34a', '#2563eb', '#ea580c', '#db2777', '#7c3aed', '#0891b2', '#b45309'];
 
 const schema = Yup.object({
   name: Yup.string().required('Role name is required'),
   code: Yup.string(),
-  level: Yup.number().min(1).max(7).required('Please select a level'),
+  level: Yup.number().min(3).max(7).required('Please select a level'),
 });
 
 function roleCodePrefix(name: string) {
@@ -163,9 +164,10 @@ export default function RolesPage() {
     setLoading(true);
     try {
       const { data } = await roleServices.http.get('/panel/roles');
-      const list = data.roles || [];
+      const list = (data.roles || []).filter(isAssignableRole);
       setRoles(list);
-      setLevels(data.levels?.length ? data.levels : FALLBACK_LEVELS);
+      const apiLevels = (data.levels || []).filter((l: { level?: number }) => isAssignableRole(l));
+      setLevels(apiLevels.length ? apiLevels : FALLBACK_LEVELS);
       setNextSeq(Number(data.next_seq) || list.length + 1);
       if (data.companyID) setCompanyID(Number(data.companyID));
     } catch (e: any) {

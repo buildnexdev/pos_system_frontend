@@ -28,7 +28,7 @@ import {
   FolderOpen,
   FileText,
 } from 'lucide-react';
-import { COMPANY_LOGO, COMPANY_NAME, COMPANY_TAGLINE } from '../../utils/brand';
+import { COMPANY_LOGO, COMPANY_MARK, COMPANY_NAME, COMPANY_TAGLINE } from '../../utils/brand';
 
 const ICONS: Record<string, React.ReactNode> = {
   role: <Layers size={16} />,
@@ -39,6 +39,7 @@ const ICONS: Record<string, React.ReactNode> = {
   invoice_agreement: <FileText size={16} />,
   manage_ticket: <Ticket size={16} />,
   product_type: <Tags size={16} />,
+  category: <Folder size={16} />,
   supplier: <Factory size={16} />,
   branch: <Building2 size={16} />,
   warehouse: <Warehouse size={16} />,
@@ -51,24 +52,28 @@ const ICONS: Record<string, React.ReactNode> = {
   dropshipping: <Truck size={16} />,
   report: <BarChart3 size={16} />,
   report_users: <Users size={16} />,
-  report_sales: <ShoppingCart size={16} />,
-  report_product: <ShoppingBag size={16} />,
   report_stock: <Package size={16} />,
-  report_warehouse: <Warehouse size={16} />,
-  report_branch: <Building2 size={16} />,
-  report_billing: <CircleDollarSign size={16} />,
+  report_product: <ShoppingBag size={16} />,
+  report_invoice: <FileText size={16} />,
+  report_bill: <CircleDollarSign size={16} />,
+  report_refund: <CreditCard size={16} />,
+  report_sales: <ShoppingCart size={16} />,
+  report_month: <ClipboardList size={16} />,
   report_day: <ClipboardList size={16} />,
+  report_finance: <Wallet size={16} />,
+  report_bank: <Building2 size={16} />,
+  report_cash: <CircleDollarSign size={16} />,
+  report_upi: <CreditCard size={16} />,
+  report_branch: <Building2 size={16} />,
+  report_warehouse: <Warehouse size={16} />,
+  report_barcode: <Tags size={16} />,
+  report_daybook: <ClipboardList size={16} />,
+  report_ledger: <ClipboardList size={16} />,
+  report_auditlog: <ShieldCheck size={16} />,
   report_auditing: <ShieldCheck size={16} />,
+  report_expense: <Package size={16} />,
+  report_billing: <CircleDollarSign size={16} />,
   finance: <Wallet size={16} />,
-  fin_accounts: <Wallet size={16} />,
-  fin_bank: <Building2 size={16} />,
-  fin_cash: <CircleDollarSign size={16} />,
-  fin_ledger: <ClipboardList size={16} />,
-  fin_journal: <Layers size={16} />,
-  fin_daybook: <ClipboardList size={16} />,
-  fin_expense: <Package size={16} />,
-  fin_spent: <ShoppingCart size={16} />,
-  fin_billing: <CircleDollarSign size={16} />,
   support: <LifeBuoy size={16} />,
   support_help: <BookOpen size={16} />,
   support_new: <PlusCircle size={16} />,
@@ -112,6 +117,7 @@ export default function PanelAside({
     const top: ModuleItem[] = [];
     const grouped: Record<string, ModuleItem[]> = {};
     items.forEach((item) => {
+      if (item.hideInMenu) return;
       if (!item.group) {
         top.push(item);
         return;
@@ -159,18 +165,12 @@ export default function PanelAside({
           to="/panel"
           className={`panel-aside-brand ${collapsed ? 'is-collapsed' : ''}`}
           onClick={onCloseMobile}
-          title={COMPANY_NAME}
+          title={`${COMPANY_NAME} — ${COMPANY_TAGLINE}`}
         >
-          <span className="panel-aside-brand-mark" aria-hidden>
-            <img src={COMPANY_LOGO} alt="" />
-          </span>
-          {!collapsed && (
-            <span className="panel-aside-brand-text">
-              <span className="panel-aside-brand-word">
-                BuildNex <em>ShopOS</em>
-              </span>
-              <span className="panel-aside-brand-tag">{COMPANY_TAGLINE}</span>
-            </span>
+          {collapsed ? (
+            <img src={COMPANY_MARK} alt={COMPANY_NAME} className="panel-aside-brand-mark-img" />
+          ) : (
+            <img src={COMPANY_LOGO} alt={COMPANY_NAME} className="panel-aside-brand-lockup" />
           )}
         </Link>
 
@@ -195,47 +195,62 @@ export default function PanelAside({
             </div>
           )}
 
-          {Object.entries(groups).map(([group, links]) => {
-            const isOpen = collapsed ? true : !!openGroups[group];
-            const hasActive = links.some((item) =>
-              item.path === '/panel' ? location.pathname === '/panel' : location.pathname.startsWith(item.path)
-            );
+          {groupNames.map((groupName) => {
+            const open = !!openGroups[groupName];
+            const groupItems = groups[groupName] || [];
+            const isActiveGroup = activeGroup === groupName;
+
+            if (collapsed) {
+              return (
+                <div key={groupName} className={`panel-aside-group ${isActiveGroup ? 'has-active' : ''}`}>
+                  <div className="panel-aside-group-collapsed-icon" title={groupName}>
+                    {GROUP_ICONS[groupName] || <Folder size={16} />}
+                  </div>
+                  {groupItems.map((item) => (
+                    <NavLink
+                      key={item.key}
+                      to={item.path}
+                      title={item.label}
+                      onClick={onCloseMobile}
+                      className={({ isActive }) => `panel-aside-link panel-aside-file ${isActive ? 'is-active' : ''}`}
+                    >
+                      <span className="panel-aside-icon panel-aside-file-icon">
+                        {ICONS[item.key] || <FileText size={16} />}
+                      </span>
+                    </NavLink>
+                  ))}
+                </div>
+              );
+            }
 
             return (
-              <div key={group} className={`panel-aside-group ${hasActive ? 'has-active' : ''} ${isOpen ? 'is-open' : ''}`}>
-                {!collapsed && (
-                  <button
-                    type="button"
-                    className={`panel-aside-group-toggle ${isOpen ? 'is-open' : ''}`}
-                    onClick={() => toggleGroup(group)}
-                    aria-expanded={isOpen}
-                  >
-                    <span className="panel-aside-group-left">
-                      <span className="panel-aside-group-icon panel-aside-folder-icon">
-                        {isOpen ? <FolderOpen size={16} /> : <Folder size={16} />}
-                      </span>
-                      <span className="panel-aside-folder-name">{group}</span>
+              <div
+                key={groupName}
+                className={`panel-aside-group ${open ? 'is-open' : ''} ${isActiveGroup ? 'has-active' : ''}`}
+              >
+                <button
+                  type="button"
+                  className={`panel-aside-group-toggle ${open ? 'is-open' : ''}`}
+                  onClick={() => toggleGroup(groupName)}
+                >
+                  <span className="panel-aside-group-left">
+                    <span className="panel-aside-folder-icon">
+                      {open ? <FolderOpen size={15} /> : <Folder size={15} />}
                     </span>
-                    <span className="panel-aside-group-meta">
-                      <span className="panel-aside-group-count">{links.length}</span>
-                      <ChevronDown size={14} className="panel-aside-chevron" />
-                    </span>
-                  </button>
-                )}
+                    <span className="panel-aside-folder-name">{groupName}</span>
+                  </span>
+                  <span className="panel-aside-group-meta">
+                    <span className="panel-aside-group-count">{groupItems.length}</span>
+                    <ChevronDown size={14} className="panel-aside-chevron" />
+                  </span>
+                </button>
 
-                {collapsed && (
-                  <div className="panel-aside-group-collapsed-icon" title={group}>
-                    {GROUP_ICONS[group] || <Folder size={16} />}
-                  </div>
-                )}
-
-                {isOpen && (
-                  <div className={`panel-aside-group-items ${collapsed ? '' : 'is-tree'}`}>
-                    {links.map((item) => (
+                {open && (
+                  <div className="panel-aside-group-items is-tree">
+                    {groupItems.map((item) => (
                       <NavLink
                         key={item.key}
                         to={item.path}
-                        end={item.path === '/panel'}
                         title={item.label}
                         onClick={onCloseMobile}
                         className={({ isActive }) => `panel-aside-link panel-aside-file ${isActive ? 'is-active' : ''}`}
@@ -243,7 +258,7 @@ export default function PanelAside({
                         <span className="panel-aside-icon panel-aside-file-icon">
                           {ICONS[item.key] || <FileText size={16} />}
                         </span>
-                        {!collapsed && <span className="panel-aside-label">{item.label}</span>}
+                        <span className="panel-aside-label">{item.label}</span>
                       </NavLink>
                     ))}
                   </div>

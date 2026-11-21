@@ -386,7 +386,22 @@
 
 .cst-form-grid {
   display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
+}
+
+.cst-form-grid .span-2 {
+  grid-column: span 2;
+}
+
+@media (max-width: 560px) {
+  .cst-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cst-form-grid .span-2 {
+    grid-column: span 1;
+  }
 }
 
 .cst-form-grid label {
@@ -410,6 +425,14 @@
 .cst-input:focus {
   border-color: #38bdf8;
   box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.12);
+}
+
+.cst-input.is-readonly,
+.cst-input[readonly] {
+  background: #f1f5f9;
+  color: #475569;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .cst-error {

@@ -14,7 +14,7 @@ export const billingServices = {
     return data.items || data.billings || [];
   },
   getOne: async (id: string | number) => {
-    const { data } = await apiClient.get(`/panel/billings/${id}`);
+    const { data } = await apiClient.get(`/panel/billings/${encodeURIComponent(String(id))}`);
     return data;
   },
   save: async (payload: any) => {

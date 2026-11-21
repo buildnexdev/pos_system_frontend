@@ -448,6 +448,14 @@
   background: #fff;
 }
 
+.loc-input.is-readonly,
+.loc-input[readonly] {
+  background: #eef2f7;
+  color: #475569;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 .loc-error {
   margin: 0.3rem 0 0;
   color: #dc2626;

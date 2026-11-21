@@ -434,6 +434,127 @@
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
+.staff-lbl-icon {
+  display: inline-block;
+  vertical-align: -2px;
+  margin-right: 0.2rem;
+  color: #64748b;
+}
+
+.staff-password-wrap {
+  position: relative;
+}
+
+.staff-password-wrap .staff-form-input {
+  padding-right: 2.6rem;
+}
+
+.staff-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.55rem;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.staff-password-toggle:hover {
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+.staff-doc-file-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.staff-doc-file-row .staff-form-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.staff-doc-upload-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  padding: 0.55rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid #93c5fd;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.staff-doc-upload-btn input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.staff-doc-upload-btn.is-busy {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.staff-doc-upload-btn:hover {
+  background: #dbeafe;
+}
+
+.staff-doc-preview {
+  margin-top: 0.15rem;
+}
+
+.staff-doc-preview-img {
+  display: inline-block;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  max-width: 220px;
+}
+
+.staff-doc-preview-img img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 140px;
+  object-fit: cover;
+}
+
+.staff-doc-preview-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #1e293b;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.staff-doc-preview-link:hover {
+  border-color: #93c5fd;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
 .staff-form-input:focus {
   border-color: #93c5fd;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);

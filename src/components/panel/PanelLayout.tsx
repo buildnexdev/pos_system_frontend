@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
-import { FINANCE_MENU_ITEMS, REPORT_MENU_ITEMS, PANEL_MODULES, hasRight } from '../../utils/access';
+import { REPORT_MENU_ITEMS, PANEL_MODULES, hasRight } from '../../utils/access';
 import PanelAside from './PanelAside';
 import DefaultHeader from './DefaultHeader';
 import DefaultFooter from './DefaultFooter';
@@ -16,31 +16,27 @@ export default function PanelLayout() {
   const visible = (() => {
     const base = PANEL_MODULES.filter((m) => {
       if ('hideInMenu' in m && m.hideInMenu) return false;
-      if (hasRight(rights, user, m.key, 'view')) return true;
-      // Products catalog shares Stock/product rights until catalog ACL is assigned
-      if (m.key === 'catalog' && hasRight(rights, user, 'product', 'view')) return true;
-      return false;
+      return hasRight(rights, user, m.key, 'view');
     });
 
-    const reportMenus = hasRight(rights, user, 'report', 'view')
-      ? REPORT_MENU_ITEMS.map((r) => ({
-          key: r.key,
-          label: r.label,
-          path: r.path,
-          group: 'Report' as const,
-        }))
-      : [];
+    const canReport = hasRight(rights, user, 'report', 'view');
+    const canFinance = hasRight(rights, user, 'finance', 'view');
 
-    const financeMenus = hasRight(rights, user, 'finance', 'view')
-      ? FINANCE_MENU_ITEMS.map((r) => ({
-          key: r.key,
-          label: r.label,
-          path: r.path,
-          group: 'Finance' as const,
-        }))
-      : [];
+    // Finance section removed — former finance links appear under Report
+    const reportMenus =
+      canReport || canFinance
+        ? REPORT_MENU_ITEMS.filter((r) => {
+            if (r.engine === 'finance') return canReport || canFinance;
+            return canReport;
+          }).map((r) => ({
+            key: r.key,
+            label: r.label,
+            path: r.path,
+            group: 'Report' as const,
+          }))
+        : [];
 
-    return [...base, ...reportMenus, ...financeMenus];
+    return [...base, ...reportMenus];
   })();
 
   useEffect(() => {

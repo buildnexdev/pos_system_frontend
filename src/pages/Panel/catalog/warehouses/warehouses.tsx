@@ -27,6 +27,7 @@ import { RootState } from '../../../../redux/store';
 import { hasRight } from '../../../../utils/access';
 import { phoneField, pincodeField, normalizePhone } from '../../../../utils/fieldValidators';
 import { Loader } from '../../../../components/ui/Loader';
+import PincodeInput from '../../../../components/ui/PincodeInput';
 import '../_shared/LocationPages.scss';
 
 const schema = Yup.object({
@@ -391,23 +392,11 @@ export default function WarehousesPage() {
                   </div>
                   <div className="loc-form-grid">
                     <div>
-                      <label>City</label>
-                      <Field name="city" className="loc-input" />
-                    </div>
-                    <div>
-                      <label>State</label>
-                      <Field name="state" className="loc-input" />
-                    </div>
-                  </div>
-                  <div className="loc-form-grid">
-                    <div>
                       <label>Pincode</label>
-                      <Field
-                        name="pincode"
+                      <PincodeInput
                         className="loc-input"
-                        inputMode="numeric"
-                        maxLength={6}
-                        placeholder="6-digit pincode"
+                        value={values.pincode}
+                        setFieldValue={setFieldValue}
                       />
                       {(touched.pincode || submitCount > 0) && errors.pincode && (
                         <p className="loc-error">{String(errors.pincode)}</p>
@@ -415,7 +404,35 @@ export default function WarehousesPage() {
                     </div>
                     <div>
                       <label>Country</label>
-                      <Field name="country" className="loc-input" />
+                      <Field
+                        name="country"
+                        className="loc-input is-readonly"
+                        readOnly
+                        tabIndex={-1}
+                        placeholder="Auto from pincode"
+                      />
+                    </div>
+                  </div>
+                  <div className="loc-form-grid">
+                    <div>
+                      <label>City</label>
+                      <Field
+                        name="city"
+                        className="loc-input is-readonly"
+                        readOnly
+                        tabIndex={-1}
+                        placeholder="Auto from pincode"
+                      />
+                    </div>
+                    <div>
+                      <label>State</label>
+                      <Field
+                        name="state"
+                        className="loc-input is-readonly"
+                        readOnly
+                        tabIndex={-1}
+                        placeholder="Auto from pincode"
+                      />
                     </div>
                   </div>
                   <label className="loc-active">

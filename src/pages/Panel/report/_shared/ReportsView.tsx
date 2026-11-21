@@ -1,3 +1,6 @@
+/**
+ * Shared reports page — Common Report UI/UX Standard
+ */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams } from 'react-router-dom';
@@ -14,18 +17,25 @@ import {
   CircleDollarSign,
   ClipboardList,
   ShieldCheck,
-  Search,
-  Filter,
-  Download,
-  FileSpreadsheet,
-  FileText,
+  Phone,
+  FileText as FileTextIcon,
+  Tag,
+  Undo2,
   X,
-  ChevronDown,
 } from 'lucide-react';
 import { reportServices } from '../../../../redux/report/report.services';
 import { REPORT_MENU_ITEMS } from '../../../../utils/access';
 import { Loader } from '../../../../components/ui/Loader';
-import './ReportsView.scss';
+import {
+  ReportHeader,
+  ReportKpis,
+  ReportTable,
+  downloadBlob,
+  formatReportCell,
+  moneyInr,
+  rowsToCsv,
+  type ReportColumn,
+} from './ui';
 
 type Filters = {
   date_from: string;
@@ -34,6 +44,9 @@ type Filters = {
   status: string;
   source: string;
   payment_status: string;
+  payment_method: string;
+  cashier: string;
+  customer: string;
   warehouse: string;
   branch: string;
   active: string;
@@ -48,6 +61,9 @@ const emptyFilters: Filters = {
   status: '',
   source: '',
   payment_status: '',
+  payment_method: '',
+  cashier: '',
+  customer: '',
   warehouse: '',
   branch: '',
   active: '',
@@ -56,79 +72,84 @@ const emptyFilters: Filters = {
 };
 
 const REPORT_ICONS: Record<string, React.ReactNode> = {
-  users: <Users size={22} />,
-  sales: <ShoppingCart size={22} />,
-  product: <ShoppingBag size={22} />,
-  stock: <Package size={22} />,
-  warehouse: <Warehouse size={22} />,
-  branch: <Building2 size={22} />,
-  billing: <CircleDollarSign size={22} />,
-  day: <ClipboardList size={22} />,
-  auditing: <ShieldCheck size={22} />,
+  users: <Users size={18} strokeWidth={1.75} />,
+  sales: <ShoppingCart size={18} strokeWidth={1.75} />,
+  product: <ShoppingBag size={18} strokeWidth={1.75} />,
+  stock: <Package size={18} strokeWidth={1.75} />,
+  warehouse: <Warehouse size={18} strokeWidth={1.75} />,
+  branch: <Building2 size={18} strokeWidth={1.75} />,
+  billing: <CircleDollarSign size={18} strokeWidth={1.75} />,
+  invoice: <FileTextIcon size={18} strokeWidth={1.75} />,
+  bill: <CircleDollarSign size={18} strokeWidth={1.75} />,
+  refund: <Undo2 size={18} strokeWidth={1.75} />,
+  month: <ClipboardList size={18} strokeWidth={1.75} />,
+  day: <ClipboardList size={18} strokeWidth={1.75} />,
+  upi: <CircleDollarSign size={18} strokeWidth={1.75} />,
+  barcode: <Tag size={18} strokeWidth={1.75} />,
+  auditlog: <ShieldCheck size={18} strokeWidth={1.75} />,
+  auditing: <ShieldCheck size={18} strokeWidth={1.75} />,
 };
 
-function money(n: unknown) {
-  return `₹${Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
+/** Preferred preview columns; export still uses full API columns. */
+const TABLE_PREVIEW_KEYS: Record<string, string[]> = {
+  users: ['employee_code', 'name', 'role_name', 'phone', 'is_active'],
+  sales: [
+    'invoice_no', 'order_number', 'created_at', 'shipping_name', 'shipping_phone',
+    'cashier_name', 'branch_name', 'item_qty', 'subtotal', 'total_discount',
+    'tax_amount', 'total', 'payment_method', 'payment_status',
+  ],
+  day: [
+    'invoice_no', 'order_number', 'created_at', 'shipping_name', 'shipping_phone',
+    'cashier_name', 'branch_name', 'item_qty', 'subtotal', 'total_discount',
+    'tax_amount', 'total', 'payment_method', 'payment_status',
+  ],
+  product: ['product_name', 'qty', 'amount'],
+  stock: ['product_name', 'stock_code', 'available_qty', 'status', 'warehouse_name'],
+  billing: ['invoice_no', 'customer_name', 'total', 'status', 'created_at'],
+  invoice: ['invoice_no', 'customer_name', 'total', 'status', 'created_at'],
+  bill: ['invoice_no', 'customer_name', 'total', 'status', 'created_at'],
+  refund: ['order_number', 'invoice_no', 'shipping_name', 'refund_amount', 'status', 'created_at'],
+  month: ['period', 'orders', 'gross_sales', 'net_revenue', 'refund_amount'],
+  upi: ['order_number', 'invoice_no', 'amount', 'reference_no', 'status', 'paid_at', 'cashier_name'],
+  barcode: ['product_name', 'sku', 'barcode', 'size', 'color', 'available_qty'],
+  branch: ['name', 'city', 'is_active'],
+  warehouse: ['name', 'code', 'branch_name', 'is_active'],
+  auditlog: ['order_number', 'from_status', 'to_status', 'created_at'],
+  auditing: ['order_number', 'from_status', 'to_status', 'created_at'],
+};
+
+function initials(name: unknown) {
+  const parts = String(name || 'S').trim().split(/\s+/).slice(0, 2);
+  return parts.map((p) => p[0]?.toUpperCase() || '').join('') || 'S';
 }
 
 function titleFor(type: string) {
   return REPORT_MENU_ITEMS.find((r) => r.type === type)?.label || 'Report';
 }
 
-function formatCell(key: string, value: unknown) {
-  if (value == null || value === '') return '—';
-  if (String(key).includes('created') || key === 'latest' || key === 'join_date') {
-    const d = new Date(String(value));
-    if (!Number.isNaN(d.getTime())) {
-      return key === 'join_date' ? d.toLocaleDateString() : d.toLocaleString();
-    }
-  }
-  if (
-    [
-      'spent', 'total', 'amount', 'tax', 'tax_amount', 'revenue', 'avg_spend', 'avg_ticket',
-      'subtotal', 'discount', 'coupon_discount', 'shipping_fee', 'round_off', 'amount_received', 'change_amount',
-    ].includes(key)
-  ) {
-    return money(value);
-  }
-  if (key === 'is_active') return Number(value) ? 'Yes' : 'No';
-  return String(value);
-}
-
-function downloadBlob(filename: string, content: string | Blob, mime: string) {
-  const blob = content instanceof Blob ? content : new Blob([content], { type: mime });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function rowsToCsv(columns: Array<{ key: string; label: string }>, rows: any[]) {
-  const head = columns.map((c) => `"${c.label}"`).join(',');
-  const body = rows
-    .map((row) =>
-      columns
-        .map((c) => `"${String(formatCell(c.key, row[c.key])).replace(/"/g, '""')}"`)
-        .join(',')
-    )
-    .join('\n');
-  return `${head}\n${body}`;
-}
-
-function kpiEntries(summary: Record<string, any>) {
-  const order = [
-    'staff', 'roles', 'customers', 'orders', 'revenue', 'avg_spend', 'avg_ticket', 'paid',
-    'products', 'qty', 'amount', 'skus', 'available', 'low_stock', 'out_of_stock',
-    'warehouses', 'reserved', 'branches', 'active', 'inactive', 'cities',
-    'invoices', 'tax', 'events', 'transitions',
+function kpiEntries(summary: Record<string, any>, type?: string) {
+  const salesOrder = [
+    'orders', 'gross_sales', 'net_revenue', 'avg_order_value', 'total_discounts', 'refund_amount',
   ];
+  const order =
+    type === 'sales' || type === 'day' || type === 'month' || type === 'refund'
+      ? salesOrder
+      : [
+          'staff', 'roles', 'customers', 'orders', 'revenue', 'avg_spend', 'avg_ticket', 'paid',
+          'products', 'qty', 'amount', 'skus', 'available', 'low_stock', 'out_of_stock',
+          'warehouses', 'reserved', 'branches', 'active', 'inactive', 'cities',
+          'invoices', 'tax', 'events', 'transitions',
+        ];
   const labels: Record<string, string> = {
     staff: 'Staff',
     roles: 'Roles',
     customers: 'Customers',
-    orders: 'Orders',
+    orders: 'Total Orders',
+    gross_sales: 'Gross Sales',
+    net_revenue: 'Net Revenue',
+    avg_order_value: 'Average Order Value',
+    total_discounts: 'Total Discounts',
+    refund_amount: 'Refund Amount',
     revenue: 'Revenue',
     avg_spend: 'Avg spend',
     avg_ticket: 'Avg ticket',
@@ -151,21 +172,87 @@ function kpiEntries(summary: Record<string, any>) {
     events: 'Events',
     transitions: 'Transitions',
   };
-  return order
+  const moneyKeys = [
+    'revenue', 'avg_spend', 'avg_ticket', 'amount', 'tax', 'total',
+    'gross_sales', 'net_revenue', 'avg_order_value', 'total_discounts', 'refund_amount',
+  ];
+  const limit = type === 'sales' || type === 'day' || type === 'month' || type === 'refund' ? 6 : 6;
+  const items = order
     .filter((k) => summary[k] != null)
-    .slice(0, 4)
+    .slice(0, limit)
     .map((k) => ({
       key: k,
       label: labels[k] || k,
-      value: ['revenue', 'avg_spend', 'avg_ticket', 'amount', 'tax', 'total'].includes(k)
-        ? money(summary[k])
-        : String(summary[k]),
+      value: moneyKeys.includes(k) ? moneyInr(summary[k]) : String(summary[k]),
     }));
+
+  if (!items.length && summary) {
+    return [{ key: 'records', label: 'Total Records', value: String(summary.orders ?? summary.events ?? 0) }];
+  }
+  return items;
+}
+
+function renderUsersCell(key: string, row: any, formatted: string) {
+  if (key === 'name') {
+    return (
+      <div className="rs-person">
+        <span className="rs-avatar">{initials(row.name)}</span>
+        <div>
+          <strong>{formatted}</strong>
+          {row.email ? <small>{String(row.email)}</small> : null}
+        </div>
+      </div>
+    );
+  }
+  if (key === 'role_name') return <span className="rs-chip">{formatted}</span>;
+  if (key === 'is_active') {
+    const on = Number(row.is_active) === 1;
+    return <span className={`rs-chip ${on ? 'on' : 'off'}`}>{on ? 'Active' : 'Inactive'}</span>;
+  }
+  if (key === 'phone') {
+    return (
+      <span className="rs-inline">
+        <Phone size={13} /> {formatted}
+      </span>
+    );
+  }
+  if (key === 'employee_code') return <span className="rs-code">{formatted}</span>;
+  return formatted;
+}
+
+function renderSalesCell(key: string, row: any, formatted: string) {
+  if (key === 'order_number' || key === 'invoice_no') return <span className="rs-code">{formatted}</span>;
+  if (key === 'shipping_name') {
+    return (
+      <div className="rs-person">
+        <span className="rs-avatar">{initials(row.shipping_name)}</span>
+        <div><strong>{formatted}</strong></div>
+      </div>
+    );
+  }
+  if (key === 'shipping_phone') {
+    return (
+      <span className="rs-inline">
+        <Phone size={13} /> {formatted}
+      </span>
+    );
+  }
+  if (key === 'status' || key === 'fulfillment_status' || key === 'payment_status') {
+    const s = String(row[key] || '').toLowerCase();
+    const on = ['delivered', 'paid', 'confirmed', 'processing', 'packed', 'shipped'].includes(s);
+    const off = ['cancelled', 'failed', 'returned', 'refunded', 'refund_pending'].includes(s);
+    return <span className={`rs-chip ${on ? 'on' : off ? 'off' : ''}`}>{formatted}</span>;
+  }
+  if (key === 'payment_method') return <span className="rs-chip">{String(row.payment_method || '—').toUpperCase()}</span>;
+  if (['total', 'subtotal', 'total_discount', 'tax_amount'].includes(key)) {
+    return <strong className="rs-money">{formatted}</strong>;
+  }
+  return formatted;
 }
 
 export default function ReportsPage() {
   const { type: typeParam } = useParams();
-  const type = (typeParam || 'users').toLowerCase();
+  const type = (typeParam || 'sales').toLowerCase();
   const dlRef = useRef<HTMLDivElement>(null);
 
   const [search, setSearch] = useState('');
@@ -176,15 +263,18 @@ export default function ReportsPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [dlOpen, setDlOpen] = useState(false);
+  const [showColFilters, setShowColFilters] = useState(true);
+  const [columnsMenuSignal, setColumnsMenuSignal] = useState(0);
 
   const heading = useMemo(() => titleFor(type), [type]);
-  const icon = REPORT_ICONS[type] || <BarChart3 size={22} />;
+  const icon = REPORT_ICONS[type] || <BarChart3 size={18} strokeWidth={1.75} />;
 
   useEffect(() => {
     setSearch('');
     setDraft(emptyFilters);
     setApplied(emptyFilters);
     setDlOpen(false);
+    setShowColFilters(true);
   }, [type]);
 
   useEffect(() => {
@@ -221,6 +311,9 @@ export default function ReportsPage() {
           status: applied.status || undefined,
           source: applied.source || undefined,
           payment_status: applied.payment_status || undefined,
+          payment_method: applied.payment_method || undefined,
+          cashier: applied.cashier || undefined,
+          customer: applied.customer || undefined,
           warehouse: applied.warehouse || undefined,
           branch: applied.branch || undefined,
           active: applied.active || undefined,
@@ -245,9 +338,26 @@ export default function ReportsPage() {
     };
   }, [type, applied]);
 
-  const columns = data?.columns || [];
+  const columns: ReportColumn[] = data?.columns || [];
   const rows = data?.rows || [];
-  const kpis = kpiEntries(data?.summary || {});
+  const tableColumns = useMemo(() => {
+    const keys = TABLE_PREVIEW_KEYS[type];
+    if (!keys?.length || !columns.length) return columns;
+    const picked = keys
+      .map((key) => columns.find((c) => c.key === key))
+      .filter(Boolean) as ReportColumn[];
+    return picked.length ? picked : columns.slice(0, 8);
+  }, [type, columns]);
+
+  const kpis = useMemo(() => {
+    const base = kpiEntries(data?.summary || {}, type);
+    if (!base.find((k) => k.key === 'records')) {
+      return [{ key: 'records', label: 'Total Records', value: String(rows.length) }, ...base].slice(0, 6);
+    }
+    return base;
+  }, [data?.summary, type, rows.length]);
+
+  const filterOptions = data?.filter_options || null;
   const fileBase = `${type}-report-${new Date().toISOString().slice(0, 10)}`;
 
   const activeFilterCount = Object.entries(applied).filter(([key, value]) => {
@@ -255,41 +365,46 @@ export default function ReportsPage() {
     return Boolean(value);
   }).length;
 
-  const runSearch = () => {
-    setApplied((prev) => ({ ...prev, q: search.trim() }));
-  };
-
+  const runSearch = () => setApplied((prev) => ({ ...prev, q: search.trim() }));
   const openFilters = () => {
     setDraft({ ...applied });
     setFiltersOpen(true);
   };
-
   const applyFilters = () => {
     setApplied({ ...draft, q: search.trim() });
     setFiltersOpen(false);
     toast.success('Filters applied');
   };
-
   const clearFilters = () => {
     setDraft(emptyFilters);
     setApplied({ ...emptyFilters, q: search.trim() });
     setFiltersOpen(false);
     toast.success('Filters cleared');
   };
+  const clearAll = () => {
+    setSearch('');
+    setDraft(emptyFilters);
+    setApplied(emptyFilters);
+    setFiltersOpen(false);
+    toast.success('All filters cleared');
+  };
+
+  const exportColumns = columns.length ? columns : tableColumns;
+  const exportRows = rows;
 
   const downloadCsv = () => {
-    if (!rows.length) return toast.error('No rows to export');
-    downloadBlob(`${fileBase}.csv`, rowsToCsv(columns, rows), 'text/csv;charset=utf-8');
+    if (!exportRows.length) return toast.error('No rows to export');
+    downloadBlob(`${fileBase}.csv`, rowsToCsv(exportColumns, exportRows), 'text/csv;charset=utf-8');
     setDlOpen(false);
     toast.success('CSV downloaded');
   };
 
   const downloadExcel = () => {
-    if (!rows.length) return toast.error('No rows to export');
-    const sheetRows = rows.map((row: any) => {
+    if (!exportRows.length) return toast.error('No rows to export');
+    const sheetRows = exportRows.map((row: any) => {
       const out: Record<string, string> = {};
-      columns.forEach((c: any) => {
-        out[c.label] = formatCell(c.key, row[c.key]);
+      exportColumns.forEach((c) => {
+        out[c.label] = formatReportCell(c.key, row[c.key]);
       });
       return out;
     });
@@ -301,143 +416,110 @@ export default function ReportsPage() {
     toast.success('Excel downloaded');
   };
 
-  const downloadPdf = () => {
-    if (!rows.length) return toast.error('No rows to export');
-    const head = columns.map((c: any) => `<th>${c.label}</th>`).join('');
-    const body = rows
-      .slice(0, 500)
-      .map((row: any) => `<tr>${columns.map((c: any) => `<td>${formatCell(c.key, row[c.key])}</td>`).join('')}</tr>`)
+  const openPrintable = () => {
+    if (!exportRows.length) return toast.error('No rows to export');
+    const head = exportColumns.map((c) => `<th>${c.label}</th>`).join('');
+    const body = exportRows
+      .slice(0, 1000)
+      .map((row: any) => `<tr>${exportColumns.map((c) => `<td>${formatReportCell(c.key, row[c.key])}</td>`).join('')}</tr>`)
       .join('');
     const kpiHtml = kpis.map((k) => `<div class="kpi"><span>${k.label}</span><strong>${k.value}</strong></div>`).join('');
     const html = `<!doctype html><html><head><title>${heading}</title>
       <style>
-        body{font-family:Segoe UI,Arial,sans-serif;padding:24px;color:#0f172a}
-        h1{margin:0 0 8px}
-        .meta{color:#64748b;font-size:12px;margin-bottom:16px}
-        .kpis{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
-        .kpi{background:#f0fdfa;border:1px solid #99f6e4;border-radius:12px;padding:10px 14px;min-width:120px}
-        .kpi span{display:block;font-size:11px;color:#64748b}
-        table{width:100%;border-collapse:collapse;font-size:12px}
-        th,td{border-bottom:1px solid #e2e8f0;padding:8px;text-align:left}
-        th{background:#f8fafc}
+        body{font-family:Segoe UI,Arial,sans-serif;padding:24px;color:#111}
+        h1{margin:0 0 8px;font-size:18px}
+        .meta{color:#666;font-size:12px;margin-bottom:16px}
+        .kpis{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+        .kpi{border:1px solid #999;padding:8px 12px;min-width:110px}
+        .kpi span{display:block;font-size:11px;color:#666}
+        table{width:100%;border-collapse:collapse;font-size:11px}
+        th,td{border:1px solid #444;padding:6px 8px;text-align:left}
+        th{background:#e5e5e5}
       </style></head><body>
       <h1>${heading}</h1>
-      <div class="meta">Generated ${new Date().toLocaleString()} · ${rows.length} rows</div>
+      <div class="meta">Generated ${new Date().toLocaleString('en-IN')} · ${exportRows.length} rows</div>
       <div class="kpis">${kpiHtml}</div>
       <table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>
       <script>window.onload=()=>window.print()</script>
       </body></html>`;
-    const w = window.open('', '_blank', 'width=1000,height=800');
-    if (!w) return toast.error('Allow popups for PDF print');
+    const w = window.open('', '_blank', 'width=1100,height=800');
+    if (!w) return toast.error('Allow popups for print / PDF');
     w.document.write(html);
     w.document.close();
     setDlOpen(false);
   };
 
-  const showDate = ['users', 'sales', 'day', 'product', 'billing', 'auditing'].includes(type);
-  const showStatus = ['sales', 'day', 'stock', 'billing', 'auditing'].includes(type);
-  const showSource = ['sales', 'day'].includes(type);
-  const showPayment = ['sales', 'day'].includes(type);
+  const showDate = ['users', 'sales', 'day', 'month', 'product', 'billing', 'invoice', 'bill', 'refund', 'upi', 'auditing', 'auditlog'].includes(type);
+  const showStatus = ['sales', 'day', 'month', 'stock', 'billing', 'invoice', 'bill', 'refund', 'auditing', 'auditlog'].includes(type);
+  const showSource = ['sales', 'day', 'month', 'refund'].includes(type);
+  const showPayment = ['sales', 'day', 'month', 'refund', 'upi'].includes(type);
+  const showPaymentMethod = ['sales', 'day', 'month', 'refund'].includes(type);
+  const showCashier = ['sales', 'day', 'month', 'refund', 'upi'].includes(type);
+  const showCustomer = ['sales', 'day', 'month', 'refund', 'invoice', 'bill'].includes(type);
   const showWarehouse = type === 'stock';
-  const showBranch = ['sales', 'day'].includes(type);
+  const showBranch = ['sales', 'day', 'month', 'refund', 'upi'].includes(type);
   const showActive = ['users', 'branch'].includes(type);
   const showCity = ['users', 'branch'].includes(type);
-  const showMinOrders = false;
+
+  const isUsers = type === 'users';
+  const isSales = type === 'sales' || type === 'day';
 
   return (
-    <div className="rpt-page">
-      <div className="rpt-panel">
-        <div className="rpt-toolbar">
-          <div className="rpt-hero">
-            <span className="rpt-hero-icon">{icon}</span>
-            <div>
-              <h1>{heading}</h1>
-              <p>{rows.length} records</p>
-            </div>
-          </div>
+    <div className="rs-page">
+      <div className="rs-panel">
+        <ReportHeader
+          title={heading}
+          icon={icon}
+          search={search}
+          onSearchChange={setSearch}
+          onSearchSubmit={runSearch}
+          searchPlaceholder={
+            isUsers
+              ? 'Search name, phone, emp id…'
+              : isSales
+                ? 'Invoice / Order ID, customer, phone…'
+                : 'Search report…'
+          }
+          filterCount={activeFilterCount}
+          onOpenFilters={openFilters}
+          showColFilters={showColFilters}
+          onToggleColFilters={() => setShowColFilters((v) => !v)}
+          onOpenColumns={() => setColumnsMenuSignal((n) => n + 1)}
+          downloadOpen={dlOpen}
+          onToggleDownload={() => setDlOpen((v) => !v)}
+          downloadRef={dlRef}
+          onExcel={downloadExcel}
+          onCsv={downloadCsv}
+          onPdf={openPrintable}
+          onPrint={openPrintable}
+          onClearAll={clearAll}
+          clearDisabled={!search && !activeFilterCount}
+        />
 
-          <label className="rpt-search">
-            <Search size={16} />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  runSearch();
-                }
-              }}
-              placeholder={type === 'users' ? 'Search staff…' : 'Search report…'}
-            />
-          </label>
-
-          <div className="rpt-toolbar-end">
-            <button
-              type="button"
-              className={`rpt-mini-btn ${activeFilterCount ? 'is-on' : ''}`}
-              onClick={openFilters}
-            >
-              <Filter size={14} />
-              Filters{activeFilterCount ? ` (${activeFilterCount})` : ''}
-            </button>
-
-            <div className="rpt-dl" ref={dlRef}>
-              <button type="button" className="rpt-mini-btn" onClick={() => setDlOpen((v) => !v)}>
-                <Download size={14} /> Download <ChevronDown size={14} />
-              </button>
-              {dlOpen && (
-                <div className="rpt-dl-menu">
-                  <button type="button" onClick={downloadPdf}><FileText size={14} /> PDF</button>
-                  <button type="button" onClick={downloadCsv}><Download size={14} /> CSV</button>
-                  <button type="button" onClick={downloadExcel}><FileSpreadsheet size={14} /> Excel</button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="rpt-body">
+        <div className="rs-body">
           {loading ? (
-            <div className="rpt-loading"><Loader /><p>Loading report…</p></div>
+            <div className="rs-loading"><Loader /><p>Loading report…</p></div>
           ) : !data ? (
-            <div className="rpt-empty">Could not load this report.</div>
+            <div className="rs-empty">Could not load this report.</div>
           ) : (
             <>
-              {!!kpis.length && (
-                <div className="rpt-kpis">
-                  {kpis.map((k) => (
-                    <div key={k.key} className="rpt-kpi">
-                      <span>{k.label}</span>
-                      <strong>{k.value}</strong>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="rpt-table-wrap">
-                {!rows.length ? (
-                  <div className="rpt-empty">No records match these filters.</div>
-                ) : (
-                  <table className="rpt-table">
-                    <thead>
-                      <tr>
-                        {columns.map((c: any) => (
-                          <th key={c.key}>{c.label}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rows.map((row: any, idx: number) => (
-                        <tr key={row.id || row.order_number || row.invoice_no || idx}>
-                          {columns.map((c: any) => (
-                            <td key={c.key}>{formatCell(c.key, row[c.key])}</td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
+              <ReportKpis items={kpis} />
+              <ReportTable
+                title={heading}
+                columns={tableColumns}
+                rows={rows}
+                columnsMenuSignal={columnsMenuSignal}
+                showColFilters={showColFilters}
+                onShowColFiltersChange={setShowColFilters}
+                emptyText="No records match these filters."
+                renderCell={(key, row, formatted) =>
+                  isUsers
+                    ? renderUsersCell(key, row, formatted)
+                    : isSales
+                      ? renderSalesCell(key, row, formatted)
+                      : formatted
+                }
+              />
             </>
           )}
         </div>
@@ -445,30 +527,30 @@ export default function ReportsPage() {
 
       {filtersOpen &&
         createPortal(
-          <div className={`rpt-overlay ${filtersVisible ? 'is-open' : ''}`}>
-            <div className="rpt-backdrop" onClick={() => setFiltersOpen(false)} />
-            <aside className={`rpt-offcanvas ${filtersVisible ? 'is-open' : ''}`} role="dialog" aria-modal="true">
-              <button type="button" className="rpt-oc-close" onClick={() => setFiltersOpen(false)} aria-label="Close">
-                <X size={18} />
+          <div className={`rs-overlay ${filtersVisible ? 'is-open' : ''}`}>
+            <div className="rs-backdrop" onClick={() => setFiltersOpen(false)} />
+            <aside className="rs-offcanvas" role="dialog" aria-modal="true">
+              <button type="button" className="rs-oc-close" onClick={() => setFiltersOpen(false)} aria-label="Close">
+                <X size={16} />
               </button>
-              <div className="rpt-oc-head">
+              <div className="rs-oc-head">
                 <h2>Filters</h2>
-                <p>Set date and conditions, then apply</p>
+                <p>Set conditions, then apply</p>
               </div>
-              <div className="rpt-oc-body">
+              <div className="rs-oc-body">
                 {showDate && (
-                  <div className="rpt-oc-dates">
+                  <div className="rs-oc-dates">
                     <label>From date
-                      <input className="rpt-input" type="date" value={draft.date_from} onChange={(e) => setDraft((f) => ({ ...f, date_from: e.target.value }))} />
+                      <input className="rs-input" type="date" value={draft.date_from} onChange={(e) => setDraft((f) => ({ ...f, date_from: e.target.value }))} />
                     </label>
                     <label>To date
-                      <input className="rpt-input" type="date" value={draft.date_to} onChange={(e) => setDraft((f) => ({ ...f, date_to: e.target.value }))} />
+                      <input className="rs-input" type="date" value={draft.date_to} onChange={(e) => setDraft((f) => ({ ...f, date_to: e.target.value }))} />
                     </label>
                   </div>
                 )}
                 {showStatus && (
                   <label>Status
-                    <select className="rpt-input" value={draft.status} onChange={(e) => setDraft((f) => ({ ...f, status: e.target.value }))}>
+                    <select className="rs-input" value={draft.status} onChange={(e) => setDraft((f) => ({ ...f, status: e.target.value }))}>
                       <option value="">All</option>
                       {type === 'stock' && (
                         <>
@@ -478,7 +560,7 @@ export default function ReportsPage() {
                           <option value="reserved">Reserved</option>
                         </>
                       )}
-                      {type === 'billing' && (
+                      {(type === 'billing' || type === 'invoice' || type === 'bill') && (
                         <>
                           <option value="draft">Draft</option>
                           <option value="sent">Sent</option>
@@ -487,7 +569,7 @@ export default function ReportsPage() {
                           <option value="cancelled">Cancelled</option>
                         </>
                       )}
-                      {(type === 'sales' || type === 'day' || type === 'auditing') && (
+                      {['sales', 'day', 'month', 'refund', 'auditing', 'auditlog'].includes(type) && (
                         <>
                           <option value="pending">Pending</option>
                           <option value="confirmed">Confirmed</option>
@@ -504,59 +586,91 @@ export default function ReportsPage() {
                   </label>
                 )}
                 {showSource && (
-                  <label>Source
-                    <select className="rpt-input" value={draft.source} onChange={(e) => setDraft((f) => ({ ...f, source: e.target.value }))}>
+                  <label>Order Source
+                    <select className="rs-input" value={draft.source} onChange={(e) => setDraft((f) => ({ ...f, source: e.target.value }))}>
                       <option value="">All</option>
-                      <option value="online">Online</option>
-                      <option value="pos">POS</option>
-                      <option value="admin">Admin</option>
+                      {(filterOptions?.order_sources || ['pos', 'online', 'admin']).map((s: string) => (
+                        <option key={s} value={s}>{String(s).toUpperCase()}</option>
+                      ))}
                     </select>
                   </label>
                 )}
                 {showPayment && (
-                  <label>Payment
-                    <select className="rpt-input" value={draft.payment_status} onChange={(e) => setDraft((f) => ({ ...f, payment_status: e.target.value }))}>
+                  <label>Payment Status
+                    <select className="rs-input" value={draft.payment_status} onChange={(e) => setDraft((f) => ({ ...f, payment_status: e.target.value }))}>
                       <option value="">All</option>
-                      <option value="pending">Pending</option>
-                      <option value="paid">Paid</option>
-                      <option value="failed">Failed</option>
-                      <option value="refunded">Refunded</option>
+                      {(filterOptions?.payment_statuses || ['pending', 'paid', 'failed', 'refund_pending', 'refunded']).map((s: string) => (
+                        <option key={s} value={s}>{String(s).replace(/_/g, ' ')}</option>
+                      ))}
                     </select>
+                  </label>
+                )}
+                {showPaymentMethod && (
+                  <label>Payment Method
+                    <select className="rs-input" value={draft.payment_method} onChange={(e) => setDraft((f) => ({ ...f, payment_method: e.target.value }))}>
+                      <option value="">All</option>
+                      {(filterOptions?.payment_methods || ['cash', 'upi', 'card', 'credit', 'online', 'cod', 'split']).map((s: string) => (
+                        <option key={s} value={s}>{String(s).toUpperCase()}</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+                {showCashier && (
+                  <label>Cashier / Staff
+                    {filterOptions?.cashiers?.length ? (
+                      <select className="rs-input" value={draft.cashier} onChange={(e) => setDraft((f) => ({ ...f, cashier: e.target.value }))}>
+                        <option value="">All</option>
+                        {filterOptions.cashiers.map((c: any) => (
+                          <option key={c.id} value={String(c.id)}>{c.name}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input className="rs-input" value={draft.cashier} onChange={(e) => setDraft((f) => ({ ...f, cashier: e.target.value }))} placeholder="Cashier name" />
+                    )}
+                  </label>
+                )}
+                {showCustomer && (
+                  <label>Customer
+                    <input className="rs-input" value={draft.customer} onChange={(e) => setDraft((f) => ({ ...f, customer: e.target.value }))} placeholder="Name or phone" />
                   </label>
                 )}
                 {showWarehouse && (
                   <label>Warehouse
-                    <input className="rpt-input" value={draft.warehouse} onChange={(e) => setDraft((f) => ({ ...f, warehouse: e.target.value }))} placeholder="Warehouse name" />
+                    <input className="rs-input" value={draft.warehouse} onChange={(e) => setDraft((f) => ({ ...f, warehouse: e.target.value }))} placeholder="Warehouse name" />
                   </label>
                 )}
                 {showBranch && (
                   <label>Branch
-                    <input className="rpt-input" value={draft.branch} onChange={(e) => setDraft((f) => ({ ...f, branch: e.target.value }))} placeholder="Branch name or code" />
+                    {filterOptions?.branches?.length ? (
+                      <select className="rs-input" value={draft.branch} onChange={(e) => setDraft((f) => ({ ...f, branch: e.target.value }))}>
+                        <option value="">All</option>
+                        {filterOptions.branches.map((b: any) => (
+                          <option key={b.id} value={b.name}>{b.name}{b.code ? ` (${b.code})` : ''}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input className="rs-input" value={draft.branch} onChange={(e) => setDraft((f) => ({ ...f, branch: e.target.value }))} placeholder="Branch name or code" />
+                    )}
                   </label>
                 )}
                 {showCity && (
                   <label>City
-                    <input className="rpt-input" value={draft.city} onChange={(e) => setDraft((f) => ({ ...f, city: e.target.value }))} placeholder="City" />
+                    <input className="rs-input" value={draft.city} onChange={(e) => setDraft((f) => ({ ...f, city: e.target.value }))} placeholder="City" />
                   </label>
                 )}
                 {showActive && (
                   <label>Active
-                    <select className="rpt-input" value={draft.active} onChange={(e) => setDraft((f) => ({ ...f, active: e.target.value }))}>
+                    <select className="rs-input" value={draft.active} onChange={(e) => setDraft((f) => ({ ...f, active: e.target.value }))}>
                       <option value="">All</option>
                       <option value="1">Active</option>
                       <option value="0">Inactive</option>
                     </select>
                   </label>
                 )}
-                {showMinOrders && (
-                  <label>Min orders
-                    <input className="rpt-input" type="number" min={0} value={draft.min_orders} onChange={(e) => setDraft((f) => ({ ...f, min_orders: e.target.value }))} placeholder="0" />
-                  </label>
-                )}
               </div>
-              <div className="rpt-oc-footer">
-                <button type="button" className="rpt-btn-ghost" onClick={clearFilters}>Clear</button>
-                <button type="button" className="rpt-btn-primary" onClick={applyFilters}>Apply Filters</button>
+              <div className="rs-oc-footer">
+                <button type="button" className="rs-btn-ghost" onClick={clearFilters}>Clear</button>
+                <button type="button" className="rs-btn-primary" onClick={applyFilters}>Apply Filters</button>
               </div>
             </aside>
           </div>,

@@ -635,6 +635,82 @@
   background: #fff !important;
 }
 
+.cat-category-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.cat-category-add {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid #93c5fd;
+  background: #eff6ff;
+  color: #1d4ed8;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.cat-category-add:hover {
+  background: #dbeafe;
+}
+
+.cat-quick-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: grid;
+  place-items: center;
+}
+
+.cat-quick-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.cat-quick-modal {
+  position: relative;
+  width: min(420px, calc(100vw - 2rem));
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.15rem 1.2rem 1.1rem;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+}
+
+.cat-quick-modal h3 {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 1.05rem;
+  color: #0f172a;
+}
+
+.cat-quick-modal p {
+  margin: 0.35rem 0 0.85rem;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.cat-quick-modal label {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #475569;
+}
+
+.cat-quick-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.95rem;
+}
+
 .cat-error {
   margin: 0.25rem 0 0;
   color: #dc2626;

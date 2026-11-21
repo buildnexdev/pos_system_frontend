@@ -702,6 +702,56 @@
   border-radius: 12px;
 }
 
+.pos-inv-search {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid var(--pos-line);
+  border-radius: 12px;
+  padding: 0.45rem 0.55rem;
+  background: #fff;
+  color: #64748b;
+  margin-bottom: 0.35rem;
+}
+
+.pos-inv-search input {
+  border: 0;
+  outline: none;
+  width: 100%;
+  min-width: 0;
+  background: transparent;
+  font-size: 0.84rem;
+  color: #0f172a;
+}
+
+.pos-inv-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.pos-inv-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #bfdbfe;
+  border-radius: 9px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.pos-inv-btn:hover:not(:disabled) {
+  background: #dbeafe;
+}
+
+.pos-inv-btn:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
 @media (max-width: 1100px) {
   .pos-shell {
     grid-template-columns: 1fr;

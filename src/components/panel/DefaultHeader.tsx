@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { RootState } from '../../redux/store';
 import { logoutRequest } from '../../redux/auth/auth.action';
-import { COMPANY_LOGO, COMPANY_NAME, COMPANY_TAGLINE, COMPANY_SUPPORT_EMAIL } from '../../utils/brand';
+import { COMPANY_NAME, COMPANY_SUPPORT_EMAIL, tenantBrand } from '../../utils/brand';
 import { dashboardServices } from '../../redux/dashboard/dashboard.services';
 import { stockServices } from '../../redux/stock/stock.services';
 
@@ -62,6 +62,7 @@ export default function DefaultHeader({ onMenuClick }: { onMenuClick: () => void
 
   const clock = formatClock(now);
   const initials = (user?.name || 'U').slice(0, 1).toUpperCase();
+  const brand = tenantBrand(user);
 
   useEffect(() => {
     const t = window.setInterval(() => setNow(new Date()), 1000);
@@ -153,11 +154,11 @@ export default function DefaultHeader({ onMenuClick }: { onMenuClick: () => void
           <Menu size={18} />
         </button>
 
-        <Link to="/panel" className="panel-brand-block" title={COMPANY_NAME}>
-          <img src={COMPANY_LOGO} alt={COMPANY_NAME} className="panel-brand-logo" />
+        <Link to="/panel" className="panel-brand-block" title={brand.name}>
+          <img src={brand.logo} alt={brand.name} className="panel-brand-logo" />
           <div className="panel-brand-text">
-            <strong>{COMPANY_NAME}</strong>
-            <span>{COMPANY_TAGLINE}</span>
+            <strong>{brand.name}</strong>
+            {brand.subtitle ? <span>{brand.subtitle}</span> : null}
           </div>
         </Link>
       </div>
